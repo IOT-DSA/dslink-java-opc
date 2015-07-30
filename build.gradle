@@ -1,0 +1,42 @@
+apply plugin: 'application'
+apply plugin: 'findbugs'
+apply plugin: 'java'
+
+mainClassName = 'opc.Main'
+sourceCompatibility = 1.7
+targetCompatibility = 1.7
+version = '0.1.0-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+    maven {
+        url 'https://oss.sonatype.org/content/repositories/snapshots/'
+    }
+}
+
+
+dependencies {
+
+    compile 'org.iot-dsa:dslink:0.6.0'
+    compile 'commons-logging:commons-logging:1.1.1'
+    compile fileTree('lib')
+}
+
+
+run {
+    args System.getProperty("exec.args", "").split()
+    workingDir project.buildDir
+}
+
+
+tasks.withType(FindBugs) {
+	//classes = classes.filter {
+    //    !it.path.contains(new File('com/serotonin').path)
+    //}
+    reports {
+        xml.enabled = false
+        html.enabled = true
+    }
+}
+
+applicationDistribution.from new File(project.projectDir, "dslink.json")
