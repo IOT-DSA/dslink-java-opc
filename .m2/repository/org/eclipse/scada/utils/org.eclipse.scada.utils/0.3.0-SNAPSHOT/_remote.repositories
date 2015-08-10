@@ -1,0 +1,7 @@
+#NOTE: This is an Aether internal implementation file, its format can be changed without prior notice.
+#Wed Aug 05 17:40:46 PDT 2015
+org.eclipse.scada.utils-0.3.0-SNAPSHOT.pom>=
+org.eclipse.scada.utils-0.3.0-SNAPSHOT-sources.jar>=
+org.eclipse.scada.utils-0.3.0-SNAPSHOT-p2metadata.xml>=
+org.eclipse.scada.utils-0.3.0-SNAPSHOT.jar>=
+org.eclipse.scada.utils-0.3.0-SNAPSHOT-p2artifacts.xml>=

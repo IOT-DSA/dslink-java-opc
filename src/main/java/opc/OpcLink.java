@@ -34,7 +34,7 @@ public class OpcLink {
 		
 		Action act = new Action(Permission.READ, new AddConnHandler());
 		act.addParameter(new Parameter("name", ValueType.STRING));
-		act.addParameter(new Parameter("host", ValueType.STRING));
+		act.addParameter(new Parameter("host", ValueType.STRING, new Value("")));
 		act.addParameter(new Parameter("domain", ValueType.STRING, new Value("")));
 		act.addParameter(new Parameter("user", ValueType.STRING, new Value("")));
 		act.addParameter(new Parameter("password", ValueType.STRING, new Value("")));

@@ -58,6 +58,14 @@ public class OpcConn {
 		anode = node.getChild("add server");
 		if (anode == null) node.createChild("add server").setAction(act).build().setSerializable(false);
 		else anode.setAction(act);
+		
+		act = new Action(Permission.READ, new AddXmlHandler());
+		act.addParameter(new Parameter("name", ValueType.STRING, new Value("OpcXmlDaSrv")));
+		act.addParameter(new Parameter("url", ValueType.STRING, new Value("http://advosol.com/XMLDADemo/ts_sim/OpcDaGateway.asmx")));
+		act.addParameter(new Parameter("service name", ValueType.STRING, new Value("OpcXmlDaSrv")));
+		anode = node.getChild("add xml-da server");
+		if (anode == null) node.createChild("add xml-da server").setAction(act).build().setSerializable(false);
+		else anode.setAction(act);
 	}
 	
 	private Action getAddServerAction(String host, String domain, String user, String pass) {
@@ -154,7 +162,20 @@ public class OpcConn {
 			Node child = node.createChild(name).build();
 			child.setAttribute("server prog id", new Value(progId));
 //			child.setAttribute("polling interval", new Value(interval));
-			OpcServer os = new OpcServer(getMe(), child);
+			ComServer os = new ComServer(getMe(), child);
+			os.init();
+		}
+	}
+	
+	private class AddXmlHandler implements Handler<ActionResult> {
+		public void handle(ActionResult event) {
+			String name = event.getParameter("name", ValueType.STRING).getString();
+			String url = event.getParameter("url", ValueType.STRING).getString();
+			String servname = event.getParameter("service name", ValueType.STRING).getString();
+			Node child = node.createChild(name).build();
+			child.setAttribute("url", new Value(url));
+			child.setAttribute("service name", new Value(servname));
+			XmlServer os = new XmlServer(getMe(), child);
 			os.init();
 		}
 	}
@@ -164,9 +185,13 @@ public class OpcConn {
 		if (node.getChildren() == null) return;
 		for (Node child: node.getChildren().values()) {
 			Value progId = child.getAttribute("server prog id");
-//			Value interval  = child.getAttribute("polling interval");
-			if (progId!=null) {
-				OpcServer os = new OpcServer(getMe(), child);
+			Value url = child.getAttribute("url");
+			Value service  = child.getAttribute("service name");
+			if (progId != null) {
+				ComServer os = new ComServer(getMe(), child);
+				os.restoreLastSession();
+			} else if (url != null && service != null) {
+				XmlServer os = new XmlServer(getMe(), child);
 				os.restoreLastSession();
 			} else if (child.getAction() == null) {
 				node.removeChild(child);

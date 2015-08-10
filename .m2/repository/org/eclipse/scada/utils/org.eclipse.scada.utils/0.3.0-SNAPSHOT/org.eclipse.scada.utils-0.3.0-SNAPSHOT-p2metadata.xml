@@ -1,0 +1,86 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<units size='2'>
+  <unit id='org.eclipse.scada.utils' version='0.3.0.v20150806-0005' singleton='false'>
+    <update id='org.eclipse.scada.utils' range='[0.0.0,0.3.0.v20150806-0005)' severity='0'/>
+    <properties size='6'>
+      <property name='org.eclipse.equinox.p2.name' value='Eclipse SCADA Common Utilities (Incubation)'/>
+      <property name='org.eclipse.equinox.p2.description' value='Utility classes for use throughout the Eclipse SCADA project'/>
+      <property name='org.eclipse.equinox.p2.provider' value='Eclipse SCADA Project'/>
+      <property name='maven-groupId' value='org.eclipse.scada.utils'/>
+      <property name='maven-artifactId' value='org.eclipse.scada.utils'/>
+      <property name='maven-version' value='0.3.0-SNAPSHOT'/>
+    </properties>
+    <provides size='20'>
+      <provided namespace='org.eclipse.equinox.p2.iu' name='org.eclipse.scada.utils' version='0.3.0.v20150806-0005'/>
+      <provided namespace='osgi.bundle' name='org.eclipse.scada.utils' version='0.3.0.v20150806-0005'/>
+      <provided namespace='java.package' name='org.eclipse.scada.utils' version='0.2.0'/>
+      <provided namespace='java.package' name='org.eclipse.scada.utils.beans' version='0.2.0'/>
+      <provided namespace='java.package' name='org.eclipse.scada.utils.collection' version='0.2.0'/>
+      <provided namespace='java.package' name='org.eclipse.scada.utils.concurrent' version='0.3.0'/>
+      <provided namespace='java.package' name='org.eclipse.scada.utils.concurrent.task' version='0.2.0'/>
+      <provided namespace='java.package' name='org.eclipse.scada.utils.init' version='0.2.0'/>
+      <provided namespace='java.package' name='org.eclipse.scada.utils.inject' version='0.2.0'/>
+      <provided namespace='java.package' name='org.eclipse.scada.utils.interner' version='0.2.0'/>
+      <provided namespace='java.package' name='org.eclipse.scada.utils.io' version='0.2.0'/>
+      <provided namespace='java.package' name='org.eclipse.scada.utils.lang' version='0.2.0'/>
+      <provided namespace='java.package' name='org.eclipse.scada.utils.lifecycle' version='0.2.0'/>
+      <provided namespace='java.package' name='org.eclipse.scada.utils.progress' version='0.3.0'/>
+      <provided namespace='java.package' name='org.eclipse.scada.utils.reflect' version='0.2.0'/>
+      <provided namespace='java.package' name='org.eclipse.scada.utils.script' version='0.2.0'/>
+      <provided namespace='java.package' name='org.eclipse.scada.utils.sql' version='0.2.0'/>
+      <provided namespace='java.package' name='org.eclipse.scada.utils.statuscodes' version='0.2.0'/>
+      <provided namespace='java.package' name='org.eclipse.scada.utils.str' version='0.2.0'/>
+      <provided namespace='org.eclipse.equinox.p2.eclipse.type' name='bundle' version='1.0.0'/>
+    </provides>
+    <requires size='6'>
+      <required namespace='java.package' name='com.google.common.collect' range='10.0.0'/>
+      <required namespace='java.package' name='javax.inject' range='1.0.0' optional='true' greedy='false'/>
+      <required namespace='java.package' name='javax.management' range='0.0.0' optional='true' greedy='false'/>
+      <required namespace='java.package' name='javax.script' range='0.0.0'/>
+      <required namespace='java.package' name='org.apache.commons.beanutils' range='1.8.0'/>
+      <required namespace='java.package' name='org.slf4j' range='[1.5.0,2.0.0)'/>
+    </requires>
+    <artifacts size='1'>
+      <artifact classifier='osgi.bundle' id='org.eclipse.scada.utils' version='0.3.0.v20150806-0005'/>
+    </artifacts>
+    <touchpoint id='org.eclipse.equinox.p2.osgi' version='1.0.0'/>
+    <touchpointData size='1'>
+      <instructions size='1'>
+        <instruction key='manifest'>
+          Bundle-SymbolicName: org.eclipse.scada.utils&#xA;Bundle-Version: 0.3.0.v20150806-0005&#xA;
+        </instruction>
+      </instructions>
+    </touchpointData>
+  </unit>
+  <unit id='org.eclipse.scada.utils.source' version='0.3.0.v20150806-0005' singleton='false'>
+    <update id='org.eclipse.scada.utils.source' range='[0.0.0,0.3.0.v20150806-0005)' severity='0'/>
+    <properties size='9'>
+      <property name='df_LT.bundleVendor' value='Eclipse SCADA Project'/>
+      <property name='df_LT.bundleName' value='Eclipse SCADA Common Utilities (Incubation) Source'/>
+      <property name='org.eclipse.equinox.p2.name' value='%bundleName'/>
+      <property name='org.eclipse.equinox.p2.provider' value='%bundleVendor'/>
+      <property name='org.eclipse.equinox.p2.bundle.localization' value='OSGI-INF/l10n/bundle-src'/>
+      <property name='maven-groupId' value='org.eclipse.scada.utils'/>
+      <property name='maven-artifactId' value='org.eclipse.scada.utils'/>
+      <property name='maven-version' value='0.3.0-SNAPSHOT'/>
+      <property name='maven-classifier' value='sources'/>
+    </properties>
+    <provides size='4'>
+      <provided namespace='org.eclipse.equinox.p2.iu' name='org.eclipse.scada.utils.source' version='0.3.0.v20150806-0005'/>
+      <provided namespace='osgi.bundle' name='org.eclipse.scada.utils.source' version='0.3.0.v20150806-0005'/>
+      <provided namespace='org.eclipse.equinox.p2.eclipse.type' name='source' version='1.0.0'/>
+      <provided namespace='org.eclipse.equinox.p2.localization' name='df_LT' version='1.0.0'/>
+    </provides>
+    <artifacts size='1'>
+      <artifact classifier='osgi.bundle' id='org.eclipse.scada.utils.source' version='0.3.0.v20150806-0005'/>
+    </artifacts>
+    <touchpoint id='org.eclipse.equinox.p2.osgi' version='1.0.0'/>
+    <touchpointData size='1'>
+      <instructions size='1'>
+        <instruction key='manifest'>
+          Bundle-SymbolicName: org.eclipse.scada.utils.source&#xA;Bundle-Version: 0.3.0.v20150806-0005&#xA;
+        </instruction>
+      </instructions>
+    </touchpointData>
+  </unit>
+</units>
