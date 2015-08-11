@@ -5,7 +5,7 @@ apply plugin: 'java'
 mainClassName = 'opc.Main'
 sourceCompatibility = 1.7
 targetCompatibility = 1.7
-version = '0.2.0-SNAPSHOT'
+version = '0.2.1-SNAPSHOT'
 
 repositories {
     mavenCentral()
@@ -20,7 +20,7 @@ repositories {
 
 dependencies {
 
-    compile 'org.iot-dsa:dslink:0.7.0'
+    compile 'org.iot-dsa:dslink:0.8.0-SNAPSHOT'
     compile 'commons-logging:commons-logging:1.1.1'
     compile 'org.apache.commons:commons-lang3:3.4'
     compile fileTree('lib')
