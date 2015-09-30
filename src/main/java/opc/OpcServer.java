@@ -13,7 +13,7 @@ import org.dsa.iot.dslink.node.value.ValuePair;
 import org.dsa.iot.dslink.node.value.ValueType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.vertx.java.core.Handler;
+import org.dsa.iot.dslink.util.handler.Handler;
 
 public abstract class OpcServer {
 	protected static final Logger LOGGER;

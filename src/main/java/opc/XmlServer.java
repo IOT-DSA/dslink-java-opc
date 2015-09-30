@@ -28,6 +28,7 @@ import org.dsa.iot.dslink.node.actions.Parameter;
 import org.dsa.iot.dslink.node.value.Value;
 import org.dsa.iot.dslink.node.value.ValuePair;
 import org.dsa.iot.dslink.node.value.ValueType;
+import org.dsa.iot.dslink.util.json.JsonArray;
 import org.openscada.opc.xmlda.Connection;
 import org.openscada.opc.xmlda.ItemRequest;
 import org.openscada.opc.xmlda.Poller;
@@ -39,8 +40,7 @@ import org.openscada.opc.xmlda.requests.BrowseEntry;
 import org.openscada.opc.xmlda.requests.ItemProperty;
 import org.openscada.opc.xmlda.requests.ItemValue;
 import org.openscada.opc.xmlda.requests.WriteRequest;
-import org.vertx.java.core.Handler;
-import org.vertx.java.core.json.JsonArray;
+import org.dsa.iot.dslink.util.handler.Handler;
 
 public class XmlServer extends OpcServer {
 	
@@ -251,10 +251,10 @@ public class XmlServer extends OpcServer {
 				if (valent != null) {
 					ValueType vtype = valent.getKey();
 					Value val = valent.getValue();
-					if (ValueType.ARRAY.compare(vtype)) jsonArr.addArray(val.getArray());
-					else if (ValueType.BOOL.compare(vtype)) jsonArr.addBoolean(val.getBool());
-					else if (ValueType.NUMBER.compare(vtype)) jsonArr.addNumber(val.getNumber());
-					else jsonArr.addString(val.getString());
+					if (ValueType.ARRAY.compare(vtype)) jsonArr.add(val.getArray());
+					else if (ValueType.BOOL.compare(vtype)) jsonArr.add(val.getBool());
+					else if (ValueType.NUMBER.compare(vtype)) jsonArr.add(val.getNumber());
+					else jsonArr.add(val.getString());
 				} else {
 					jsonArr.add(null);
 				}
@@ -334,7 +334,7 @@ public class XmlServer extends OpcServer {
 					else atype = ArrayType.STR;
 					val = toTypedList(newVal.getArray(), atype);
 					if (val == null) return;
-				} else val = newVal.getArray().toList();
+				} else val = newVal.getArray().getList();
 			} else if (ValueType.BOOL.compare(vtype)) val = newVal.getBool();
 			else if (ValueType.NUMBER.compare(vtype)) val = newVal.getNumber();
 			else if (itemNode.getAttribute("dataType") != null && itemNode.getAttribute("dataType").getString().equals("dateTime")) {

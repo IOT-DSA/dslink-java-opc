@@ -18,6 +18,7 @@ import org.dsa.iot.dslink.node.actions.Parameter;
 import org.dsa.iot.dslink.node.value.Value;
 import org.dsa.iot.dslink.node.value.ValuePair;
 import org.dsa.iot.dslink.node.value.ValueType;
+import org.dsa.iot.dslink.util.json.JsonArray;
 import org.jinterop.dcom.common.JIException;
 import org.jinterop.dcom.core.IJIUnsigned;
 import org.jinterop.dcom.core.JIArray;
@@ -42,8 +43,7 @@ import org.openscada.opc.lib.da.browser.TreeBrowser;
 import org.openscada.opc.lib.list.Categories;
 import org.openscada.opc.lib.list.Category;
 import org.openscada.opc.lib.list.ServerList;
-import org.vertx.java.core.Handler;
-import org.vertx.java.core.json.JsonArray;
+import org.dsa.iot.dslink.util.handler.Handler;
 
 public class ComServer extends OpcServer {
 	
@@ -384,10 +384,10 @@ public class ComServer extends OpcServer {
 				JsonArray jsonArr = new JsonArray();
 				Object[] objArr = (Object[]) ji.getObjectAsArray().getArrayInstance();
 				for (Object o: objArr) {
-					if (o instanceof Number) jsonArr.addNumber((Number) o);
-					else if (o instanceof String) jsonArr.addString((String) o);
-					else if (o instanceof Date) jsonArr.addString(((Date) o).toString());
-					else if (o instanceof Boolean) jsonArr.addBoolean((Boolean) o);
+					if (o instanceof Number) jsonArr.add(o);
+					else if (o instanceof String) jsonArr.add(o);
+					else if (o instanceof Date) jsonArr.add(o.toString());
+					else if (o instanceof Boolean) jsonArr.add(o);
 					else {
 						Value v;
 						ValueType vtype;
@@ -403,10 +403,10 @@ public class ComServer extends OpcServer {
 							vtype = ValueType.STRING;
 							v = new Value(o.toString());
 						}
-						if (ValueType.ARRAY.compare(vtype)) jsonArr.addArray(v.getArray());
-						else if (ValueType.BOOL.compare(vtype)) jsonArr.addBoolean(v.getBool());
-						else if (ValueType.NUMBER.compare(vtype)) jsonArr.addNumber(v.getNumber());
-						else jsonArr.addString(v.getString());
+						if (ValueType.ARRAY.compare(vtype)) jsonArr.add(v.getArray());
+						else if (ValueType.BOOL.compare(vtype)) jsonArr.add(v.getBool());
+						else if (ValueType.NUMBER.compare(vtype)) jsonArr.add(v.getNumber());
+						else jsonArr.add(v.getString());
 					}
 				}
 				val = new Value(jsonArr);
