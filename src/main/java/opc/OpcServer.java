@@ -21,6 +21,8 @@ public abstract class OpcServer {
 		LOGGER = LoggerFactory.getLogger(OpcServer.class);
 	}
 	
+	protected static final boolean LAZY_LOAD = true;
+	
 	protected final OpcConn conn;
 	protected final Node node;
 	protected boolean stopped;

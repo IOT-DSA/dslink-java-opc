@@ -178,7 +178,17 @@ public class XmlServer extends OpcServer {
                  }
                  if (entry.isParent()) {
                 	 if (child == null) child = parent.createChild(entry.getName()).build();
-                     connection.createBrowser(entry, new TreeBuilder(child), SCAN_DELAY, BATCH_SIZE, true);
+                	 if (LAZY_LOAD) {
+                		 child.getListener().setOnListHandler(new Handler<Node>() {
+                			 private boolean loaded = false;
+                			 public void handle(Node event) {
+                				 if (!loaded) connection.createBrowser(entry, new TreeBuilder(event), SCAN_DELAY, BATCH_SIZE, true);
+                				 loaded = true;
+                			 }
+                		 });
+                	 } else {
+                		 connection.createBrowser(entry, new TreeBuilder(child), SCAN_DELAY, BATCH_SIZE, true);
+                	 }
                  }
 			 }
 			

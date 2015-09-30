@@ -217,7 +217,17 @@ public class ComServer extends OpcServer {
         }
         for (final Branch subBranch : branch.getBranches()) {
             Node child = branchNode.createChild(subBranch.getName()).build();
-        	dumpTree(subBranch, child);
+        	if (LAZY_LOAD) {
+        		child.getListener().setOnListHandler(new Handler<Node>() {
+        			private boolean loaded = false;
+        			public void handle(Node event) {
+        				if (!loaded) dumpTree(subBranch, event);
+        				loaded = true;
+        			}
+        		});
+        	} else {
+        		dumpTree(subBranch, child);
+        	}
         }
     }
 	
