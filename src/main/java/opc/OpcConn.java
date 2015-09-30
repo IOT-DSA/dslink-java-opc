@@ -11,14 +11,14 @@ import org.dsa.iot.dslink.node.actions.ActionResult;
 import org.dsa.iot.dslink.node.actions.Parameter;
 import org.dsa.iot.dslink.node.value.Value;
 import org.dsa.iot.dslink.node.value.ValueType;
+import org.dsa.iot.dslink.util.json.JsonObject;
 import org.openscada.opc.dcom.list.ClassDetails;
 import org.openscada.opc.lib.list.Categories;
 import org.openscada.opc.lib.list.Category;
 import org.openscada.opc.lib.list.ServerList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.vertx.java.core.Handler;
-import org.vertx.java.core.json.JsonObject;
+import org.dsa.iot.dslink.util.handler.Handler;
 
 public class OpcConn {
 	private static final Logger LOGGER;
@@ -132,8 +132,8 @@ public class OpcConn {
 	private void rename(String name) {
 		JsonObject jobj = link.copySerializer.serialize();
 		JsonObject parentobj = jobj;
-		JsonObject nodeobj = parentobj.getObject(node.getName());
-		parentobj.putObject(name, nodeobj);
+		JsonObject nodeobj = parentobj.get(node.getName());
+		parentobj.put(name, nodeobj);
 		link.copyDeserializer.deserialize(jobj);
 		Node newnode = node.getParent().getChild(name);
 		OpcConn oc = new OpcConn(link, newnode);
