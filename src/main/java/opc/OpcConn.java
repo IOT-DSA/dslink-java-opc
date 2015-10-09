@@ -8,6 +8,7 @@ import org.dsa.iot.dslink.node.Node;
 import org.dsa.iot.dslink.node.Permission;
 import org.dsa.iot.dslink.node.actions.Action;
 import org.dsa.iot.dslink.node.actions.ActionResult;
+import org.dsa.iot.dslink.node.actions.EditorType;
 import org.dsa.iot.dslink.node.actions.Parameter;
 import org.dsa.iot.dslink.node.value.Value;
 import org.dsa.iot.dslink.node.value.ValueType;
@@ -79,9 +80,9 @@ public class OpcConn {
 		}
 		if (enums != null && enums.size() > 0) {
 			act.addParameter(new Parameter("server prog id", ValueType.makeEnum(enums)));
-			act.addParameter(new Parameter("server prog id (manual entry)", ValueType.STRING));
+			act.addParameter(new Parameter("server prog id (manual entry)", ValueType.STRING).setPlaceHolder("Matrikon.OPC.Simulation.1"));
 		} else {
-			act.addParameter(new Parameter("server prog id", ValueType.STRING));
+			act.addParameter(new Parameter("server prog id", ValueType.STRING).setPlaceHolder("Matrikon.OPC.Simulation.1"));
 		}
 //		act.addParameter(new Parameter("polling interval", ValueType.NUMBER, new Value(3)));
 		return act;
@@ -93,7 +94,7 @@ public class OpcConn {
 		act.addParameter(new Parameter("host", ValueType.STRING, new Value(host)));
 		act.addParameter(new Parameter("domain", ValueType.STRING, new Value(domain)));
 		act.addParameter(new Parameter("user", ValueType.STRING, new Value(user)));
-		act.addParameter(new Parameter("password", ValueType.STRING, new Value(pass)));
+		act.addParameter(new Parameter("password", ValueType.STRING, new Value(pass)).setEditorType(EditorType.PASSWORD));
 		return act;
 	}
 	

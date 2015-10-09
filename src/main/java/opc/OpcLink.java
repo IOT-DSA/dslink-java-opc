@@ -4,6 +4,7 @@ import org.dsa.iot.dslink.node.Node;
 import org.dsa.iot.dslink.node.Permission;
 import org.dsa.iot.dslink.node.actions.Action;
 import org.dsa.iot.dslink.node.actions.ActionResult;
+import org.dsa.iot.dslink.node.actions.EditorType;
 import org.dsa.iot.dslink.node.actions.Parameter;
 import org.dsa.iot.dslink.node.value.Value;
 import org.dsa.iot.dslink.node.value.ValueType;
@@ -33,11 +34,11 @@ public class OpcLink {
 		restoreLastSession();
 		
 		Action act = new Action(Permission.READ, new AddConnHandler());
-		act.addParameter(new Parameter("name", ValueType.STRING));
-		act.addParameter(new Parameter("host", ValueType.STRING, new Value("")));
-		act.addParameter(new Parameter("domain", ValueType.STRING, new Value("")));
-		act.addParameter(new Parameter("user", ValueType.STRING, new Value("")));
-		act.addParameter(new Parameter("password", ValueType.STRING, new Value("")));
+		act.addParameter(new Parameter("name", ValueType.STRING).setPlaceHolder("conn"));
+		act.addParameter(new Parameter("host", ValueType.STRING, new Value("")).setPlaceHolder("PC-NAME"));
+		act.addParameter(new Parameter("domain", ValueType.STRING, new Value("")).setPlaceHolder("localhost"));
+		act.addParameter(new Parameter("user", ValueType.STRING, new Value("")).setPlaceHolder("Username"));
+		act.addParameter(new Parameter("password", ValueType.STRING, new Value("")).setEditorType(EditorType.PASSWORD));
 		node.createChild("add connection").setAction(act).build().setSerializable(false);
 		
 	}
