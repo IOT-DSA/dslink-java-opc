@@ -9,7 +9,6 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
-
 import org.dsa.iot.dslink.node.Node;
 import org.dsa.iot.dslink.node.Permission;
 import org.dsa.iot.dslink.node.actions.Action;
@@ -114,6 +113,17 @@ public class ComServer extends OpcServer {
 		} catch (JIException e) {
 			LOGGER.debug("", e);
 		}
+//		Value intval = node.getAttribute("refresh interval");
+//		if (intval == null) return;
+//		long interv = intval.getNumber().longValue();
+//		if (interv <= 0) return;
+//		ScheduledThreadPoolExecutor stpe = Objects.getDaemonThreadPool();
+//		stpe.schedule(new Runnable() {
+//			public void run() {
+//				stop();
+//				init();
+//			}
+//		}, interv, TimeUnit.MINUTES);
 	}
 
 	@Override
@@ -138,8 +148,8 @@ public class ComServer extends OpcServer {
 		} else {
 			act.addParameter(new Parameter("server prog id", ValueType.STRING, new Value(progId)));
 		}
-//		double defint = interval / 1000.0;
-//		act.addParameter(new Parameter("polling interval", ValueType.NUMBER, new Value(defint)));
+
+//		act.addParameter(new Parameter("refresh interval (min)", ValueType.NUMBER, node.getAttribute("refresh interval")));
 		return act;
 	}
 
@@ -153,7 +163,7 @@ public class ComServer extends OpcServer {
 			} else {
 				progId = event.getParameter("server prog id").getString();
 			}
-//			int interval = (int) (event.getParameter("polling interval", ValueType.NUMBER).getNumber().doubleValue()*1000);
+//			long interval = event.getParameter("refresh interval (minutes)", ValueType.NUMBER).getNumber().longValue();
 			
 			if (name!=null && name.length()>0 && !name.equals(node.getName())) {
 				Node newNode = node.getParent().createChild(name).build();
@@ -164,7 +174,7 @@ public class ComServer extends OpcServer {
 			} else {
 			
 				node.setAttribute("server prog id", new Value(progId));
-//				node.setAttribute("polling interval", new Value(interval));
+//				node.setAttribute("refresh interval", new Value(interval));
 			
 				stop();
 				init();
@@ -214,6 +224,7 @@ public class ComServer extends OpcServer {
             child.setAttribute("item id", new Value(leaf.getItemId()));
             child.setAttribute("accessRights", new Value("readWritable"));
             setupNode(child);
+            if (node.getLink().getSubscriptionManager().hasValueSub(child)) addItemSub(child);
         }
         for (final Branch subBranch : branch.getBranches()) {
             Node child = branchNode.createChild(subBranch.getName()).build();

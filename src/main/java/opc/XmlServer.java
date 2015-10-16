@@ -175,6 +175,7 @@ public class XmlServer extends OpcServer {
                      //System.out.println();
                 	 
                 	 setupNode(child);
+                	 if (child.getLink().getSubscriptionManager().hasValueSub(child)) addItemSub(child);
                  }
                  if (entry.isParent()) {
                 	 if (child == null) child = parent.createChild(entry.getName()).build();
