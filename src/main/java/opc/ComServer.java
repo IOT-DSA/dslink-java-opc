@@ -9,6 +9,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
+
 import org.dsa.iot.dslink.node.Node;
 import org.dsa.iot.dslink.node.Permission;
 import org.dsa.iot.dslink.node.actions.Action;
@@ -32,6 +33,7 @@ import org.openscada.opc.lib.common.AlreadyConnectedException;
 import org.openscada.opc.lib.common.ConnectionInformation;
 import org.openscada.opc.lib.common.NotConnectedException;
 import org.openscada.opc.lib.da.AddFailedException;
+import org.openscada.opc.lib.da.AutoReconnectController;
 import org.openscada.opc.lib.da.DuplicateGroupException;
 import org.openscada.opc.lib.da.Group;
 import org.openscada.opc.lib.da.Item;
@@ -47,6 +49,7 @@ import org.dsa.iot.dslink.util.handler.Handler;
 public class ComServer extends OpcServer {
 	
 	private Server server;
+	private AutoReconnectController autoReconnectController = null;
 	private Group subGroup;
 	private final Map<Node, ItemWrap> subscribed = new ConcurrentHashMap<Node, ItemWrap>();
 	
@@ -71,35 +74,65 @@ public class ComServer extends OpcServer {
 		}
         // create a new server
         server = new Server(ci, Executors.newSingleThreadScheduledExecutor());
-	
+        
+        boolean success = false;
+        
         try {
             // connect to server
             server.connect();
-
-            subGroup = server.addGroup();
-            subGroup.attach(new ItemCallback());
-            populateGroup();
-            subGroup.setActive(true);
-            stopped = false;
+        	success = true;
             
         } catch (final JIException e) {
         	LOGGER.debug("", e);
+        	success = false;
         	stop();
         } catch (IllegalArgumentException e) {
         	LOGGER.debug("", e);
+        	success = false;
         	stop();
 		} catch (UnknownHostException e) {
 			LOGGER.debug("", e);
-			stop();
-		} catch (NotConnectedException e) {
-			LOGGER.debug("", e);
-			stop();
-		} catch (DuplicateGroupException e) {
-			LOGGER.debug("", e);
+			success = false;
 			stop();
 		} catch (AlreadyConnectedException e) {
 			LOGGER.debug("", e);
 		}
+        
+        if (!success) {
+        	autoReconnectController = new AutoReconnectController(server);
+        	autoReconnectController.connect();
+        	success = true;
+        	try {
+				Thread.sleep(5000);
+			} catch (InterruptedException e) {
+				LOGGER.debug("", e);
+			}
+        }
+        
+        if (success) {
+        	try {
+				subGroup = server.addGroup();
+				subGroup.attach(new ItemCallback());
+	        	populateGroup();
+	        	subGroup.setActive(true);
+	        	stopped = false;
+			} catch (IllegalArgumentException e) {
+				LOGGER.debug("", e);
+				stop();
+			} catch (UnknownHostException e) {
+				LOGGER.debug("", e);
+				stop();
+			} catch (NotConnectedException e) {
+				LOGGER.debug("", e);
+				stop();
+			} catch (JIException e) {
+				LOGGER.debug("", e);
+				stop();
+			} catch (DuplicateGroupException e) {
+				LOGGER.debug("", e);
+				stop();
+			}
+        }
 	}
 	
 	@Override
@@ -190,6 +223,11 @@ public class ComServer extends OpcServer {
 			} catch (JIException e) {
 				LOGGER.debug("", e);
 			}
+		}
+		
+		if (autoReconnectController != null) {
+			autoReconnectController.disconnect();
+			autoReconnectController = null;
 		}
 		if (server != null) {
 			server.disconnect();
