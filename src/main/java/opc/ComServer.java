@@ -85,15 +85,12 @@ public class ComServer extends OpcServer {
         } catch (final JIException e) {
         	LOGGER.debug("", e);
         	success = false;
-        	stop();
         } catch (IllegalArgumentException e) {
         	LOGGER.debug("", e);
         	success = false;
-        	stop();
 		} catch (UnknownHostException e) {
 			LOGGER.debug("", e);
 			success = false;
-			stop();
 		} catch (AlreadyConnectedException e) {
 			LOGGER.debug("", e);
 		}
@@ -132,6 +129,8 @@ public class ComServer extends OpcServer {
 				LOGGER.debug("", e);
 				stop();
 			}
+        } else {
+        	stop();
         }
 	}
 	
