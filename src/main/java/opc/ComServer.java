@@ -71,12 +71,17 @@ public class ComServer extends OpcServer {
         ci.setDomain(domain);
         ci.setUser(user);
         ci.setPassword(pass);
-        try {
-			ci.setClsid(getClsId(host, domain, user, pass, progId));
-		} catch (Exception e1) {
-			LOGGER.debug("", e1);
-			ci.setProgId(progId);
-		}
+        Value clsidVal = node.getAttribute("server cls id");
+        if (clsidVal != null) {
+        	ci.setClsid(clsidVal.getString());
+        } else {
+	        try {
+				ci.setClsid(getClsId(host, domain, user, pass, progId));
+			} catch (Exception e1) {
+				LOGGER.debug("", e1);
+				ci.setProgId(progId);
+			}
+        }
         // create a new server
         server = new Server(ci, Executors.newSingleThreadScheduledExecutor());
         
@@ -98,18 +103,38 @@ public class ComServer extends OpcServer {
 			success = false;
 		} catch (AlreadyConnectedException e) {
 			LOGGER.debug("", e);
+		} catch (Exception e) {
+			LOGGER.debug("", e);
+			success = false;
 		}
         
-//        if (!success) {
-//        	autoReconnectController = new AutoReconnectController(server);
-//        	autoReconnectController.connect();
-//        	success = true;
-//        	try {
-//				Thread.sleep(5000);
-//			} catch (InterruptedException e) {
-//				LOGGER.debug("", e);
-//			}
-//        }
+        if (!success) {
+        	ci = new ConnectionInformation();
+            ci.setHost(host);
+            ci.setDomain(domain);
+            ci.setUser(user);
+            ci.setPassword(pass);
+            ci.setProgId(progId);
+            server = new Server(ci, Executors.newSingleThreadScheduledExecutor());
+            try {
+				server.connect();
+				success = true;
+			} catch (IllegalArgumentException e) {
+				LOGGER.debug("", e);
+				success = false;
+			} catch (UnknownHostException e) {
+				LOGGER.debug("", e);
+				success = false;
+			} catch (JIException e) {
+				LOGGER.debug("", e);
+				success = false;
+			} catch (AlreadyConnectedException e) {
+				LOGGER.debug("", e);
+			} catch (Exception e) {
+				LOGGER.debug("", e);
+				success = false;
+			}
+        }
         
         if (success) {
         	try {
@@ -196,6 +221,7 @@ public class ComServer extends OpcServer {
 			act.addParameter(new Parameter("server prog id", ValueType.STRING, new Value(progId)));
 		}
 
+		act.addParameter(new Parameter("server cls id (manual entry)", ValueType.STRING, node.getAttribute("server cls id")));
 		act.addParameter(new Parameter("polling interval", ValueType.NUMBER, node.getAttribute("polling interval")));
 		return act;
 	}
@@ -210,11 +236,13 @@ public class ComServer extends OpcServer {
 			} else {
 				progId = event.getParameter("server prog id").getString();
 			}
+			Value clsid = event.getParameter("server cls id (manual entry)");
 			double interval = event.getParameter("polling interval", ValueType.NUMBER).getNumber().doubleValue();
 			
 			if (name!=null && name.length()>0 && !name.equals(node.getName())) {
 				Node newNode = node.getParent().createChild(name).build();
 				newNode.setAttribute("server prog id", new Value(progId));
+				if (clsid != null && clsid.getString() != null && clsid.getString().length()>0) newNode.setAttribute("server cls id", clsid);
 				newNode.setAttribute("polling interval", new Value(interval));
 				ComServer os = new ComServer(conn, newNode);
 				remove();
@@ -222,6 +250,8 @@ public class ComServer extends OpcServer {
 			} else {
 			
 				node.setAttribute("server prog id", new Value(progId));
+				if (clsid != null && clsid.getString() != null && clsid.getString().length()>0) node.setAttribute("server cls id", clsid);
+				else node.removeAttribute("server cls id");
 				node.setAttribute("polling interval", new Value(interval));
 			
 				stop();

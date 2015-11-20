@@ -84,6 +84,7 @@ public class OpcConn {
 		} else {
 			act.addParameter(new Parameter("server prog id", ValueType.STRING).setPlaceHolder("Matrikon.OPC.Simulation.1"));
 		}
+		act.addParameter(new Parameter("server cls id (manual entry)", ValueType.STRING).setDescription("If left blank, will be determined automatically, using prog id"));
 		act.addParameter(new Parameter("polling interval", ValueType.NUMBER, new Value(1)).setDescription("set this to 0 for subscription"));
 		return act;
 	}
@@ -158,10 +159,12 @@ public class OpcConn {
 			} else {
 				progId = event.getParameter("server prog id").getString();
 			}
+			Value clsid = event.getParameter("server cls id (manual entry)");
 			double interval = event.getParameter("polling interval", ValueType.NUMBER).getNumber().doubleValue();
 			
 			Node child = node.createChild(name).build();
 			child.setAttribute("server prog id", new Value(progId));
+			if (clsid != null && clsid.getString() != null && clsid.getString().length()>0) child.setAttribute("server cls id", clsid);
 			child.setAttribute("polling interval", new Value(interval));
 			ComServer os = new ComServer(getMe(), child);
 			os.init();
