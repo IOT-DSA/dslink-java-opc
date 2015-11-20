@@ -84,7 +84,7 @@ public class OpcConn {
 		} else {
 			act.addParameter(new Parameter("server prog id", ValueType.STRING).setPlaceHolder("Matrikon.OPC.Simulation.1"));
 		}
-//		act.addParameter(new Parameter("refresh interval (minutes)", ValueType.NUMBER, new Value(10)));
+		act.addParameter(new Parameter("polling interval", ValueType.NUMBER, new Value(0)).setDescription("set this to 0 for subscription"));
 		return act;
 	}
 	
@@ -158,11 +158,11 @@ public class OpcConn {
 			} else {
 				progId = event.getParameter("server prog id").getString();
 			}
-//			long interval = event.getParameter("refresh interval (minutes)", ValueType.NUMBER).getNumber().longValue();
+			double interval = event.getParameter("polling interval", ValueType.NUMBER).getNumber().doubleValue();
 			
 			Node child = node.createChild(name).build();
 			child.setAttribute("server prog id", new Value(progId));
-//			child.setAttribute("refresh interval", new Value(interval));
+			child.setAttribute("polling interval", new Value(interval));
 			ComServer os = new ComServer(getMe(), child);
 			os.init();
 		}
@@ -188,7 +188,8 @@ public class OpcConn {
 			Value progId = child.getAttribute("server prog id");
 			Value url = child.getAttribute("url");
 			Value service  = child.getAttribute("service name");
-			if (progId != null) {
+			Value interval = child.getAttribute("polling interval");
+			if (progId != null && interval != null) {
 				ComServer os = new ComServer(getMe(), child);
 				os.restoreLastSession();
 			} else if (url != null && service != null) {

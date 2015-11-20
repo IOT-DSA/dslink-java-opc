@@ -32,12 +32,15 @@ import org.openscada.opc.dcom.list.ClassDetails;
 import org.openscada.opc.lib.common.AlreadyConnectedException;
 import org.openscada.opc.lib.common.ConnectionInformation;
 import org.openscada.opc.lib.common.NotConnectedException;
+import org.openscada.opc.lib.da.AccessBase;
 import org.openscada.opc.lib.da.AddFailedException;
-import org.openscada.opc.lib.da.AutoReconnectController;
+import org.openscada.opc.lib.da.DataCallback;
 import org.openscada.opc.lib.da.DuplicateGroupException;
 import org.openscada.opc.lib.da.Group;
 import org.openscada.opc.lib.da.Item;
+import org.openscada.opc.lib.da.ItemState;
 import org.openscada.opc.lib.da.Server;
+import org.openscada.opc.lib.da.SyncAccess;
 import org.openscada.opc.lib.da.browser.Branch;
 import org.openscada.opc.lib.da.browser.Leaf;
 import org.openscada.opc.lib.da.browser.TreeBrowser;
@@ -49,8 +52,10 @@ import org.dsa.iot.dslink.util.handler.Handler;
 public class ComServer extends OpcServer {
 	
 	private Server server;
-	private AutoReconnectController autoReconnectController = null;
+//	private AutoReconnectController autoReconnectController = null;
 	private Group subGroup;
+	private AccessBase access;
+	final private SyncItemCallback callbackSync = new SyncItemCallback();
 	private final Map<Node, ItemWrap> subscribed = new ConcurrentHashMap<Node, ItemWrap>();
 	
 	ComServer(OpcConn c, Node n) {
@@ -95,23 +100,33 @@ public class ComServer extends OpcServer {
 			LOGGER.debug("", e);
 		}
         
-        if (!success) {
-        	autoReconnectController = new AutoReconnectController(server);
-        	autoReconnectController.connect();
-        	success = true;
-        	try {
-				Thread.sleep(5000);
-			} catch (InterruptedException e) {
-				LOGGER.debug("", e);
-			}
-        }
+//        if (!success) {
+//        	autoReconnectController = new AutoReconnectController(server);
+//        	autoReconnectController.connect();
+//        	success = true;
+//        	try {
+//				Thread.sleep(5000);
+//			} catch (InterruptedException e) {
+//				LOGGER.debug("", e);
+//			}
+//        }
         
         if (success) {
         	try {
-				subGroup = server.addGroup();
-				subGroup.attach(new ItemCallback());
-	        	populateGroup();
-	        	subGroup.setActive(true);
+        		double interv = node.getAttribute("polling interval").getNumber().doubleValue();
+        		if (interv == 0) {
+        			access = null;
+        			subGroup = server.addGroup();
+        			subGroup.attach(new ItemCallback());
+        			populateGroup();
+        			subGroup.setActive(true);
+        		} else {
+        			subGroup = server.addGroup();
+        			populateGroup();
+        			access = new SyncAccess(server, (int) (interv*1000));
+        			populateAccess();
+        			access.bind();
+        		}
 	        	stopped = false;
 			} catch (IllegalArgumentException e) {
 				LOGGER.debug("", e);
@@ -181,7 +196,7 @@ public class ComServer extends OpcServer {
 			act.addParameter(new Parameter("server prog id", ValueType.STRING, new Value(progId)));
 		}
 
-//		act.addParameter(new Parameter("refresh interval (min)", ValueType.NUMBER, node.getAttribute("refresh interval")));
+		act.addParameter(new Parameter("polling interval", ValueType.NUMBER, node.getAttribute("polling interval")));
 		return act;
 	}
 
@@ -195,18 +210,19 @@ public class ComServer extends OpcServer {
 			} else {
 				progId = event.getParameter("server prog id").getString();
 			}
-//			long interval = event.getParameter("refresh interval (minutes)", ValueType.NUMBER).getNumber().longValue();
+			double interval = event.getParameter("polling interval", ValueType.NUMBER).getNumber().doubleValue();
 			
 			if (name!=null && name.length()>0 && !name.equals(node.getName())) {
 				Node newNode = node.getParent().createChild(name).build();
 				newNode.setAttribute("server prog id", new Value(progId));
+				newNode.setAttribute("polling interval", new Value(interval));
 				ComServer os = new ComServer(conn, newNode);
 				remove();
 				os.restoreLastSession();
 			} else {
 			
 				node.setAttribute("server prog id", new Value(progId));
-//				node.setAttribute("refresh interval", new Value(interval));
+				node.setAttribute("polling interval", new Value(interval));
 			
 				stop();
 				init();
@@ -224,10 +240,18 @@ public class ComServer extends OpcServer {
 			}
 		}
 		
-		if (autoReconnectController != null) {
-			autoReconnectController.disconnect();
-			autoReconnectController = null;
+		if (access != null) {
+			try {
+				access.unbind();
+			} catch (JIException e) {
+				LOGGER.debug("", e);
+			}
 		}
+		
+//		if (autoReconnectController != null) {
+//			autoReconnectController.disconnect();
+//			autoReconnectController = null;
+//		}
 		if (server != null) {
 			server.disconnect();
 			server = null;
@@ -481,6 +505,7 @@ public class ComServer extends OpcServer {
 
 		public void dataChange(int transactionId, int serverGroupHandle, int masterQuality, int masterErrorCode, KeyedResultSet<Integer, ValueData> result) {
 			for (KeyedResult<Integer, ValueData> kr: result) {
+				LOGGER.debug("dataChange: "+kr.getKey()+" : "+kr.getValue());
 				Item item = subGroup.findItemByClientHandle(kr.getKey());
 				if (item == null) return;
 				Node itemNode = itemNodes.get(item.getId());
@@ -519,10 +544,30 @@ public class ComServer extends OpcServer {
 			
 		}
 	}
+	
+	private class SyncItemCallback implements DataCallback {
+
+		public void changed(Item item, ItemState itemState) {
+			Node itemNode = itemNodes.get(item.getId());
+			JIVariant ji = itemState.getValue();
+			
+			try {
+				Entry<ValueType, Value> entry = getValueFromJI(ji);
+				
+				itemNode.setValueType(entry.getKey());
+				itemNode.setValue(entry.getValue());
+			} catch (JIException e) {
+				LOGGER.debug("", e);
+			}
+			
+		}
+		
+	}
 
 	public void addItemSub(Node event) {
 		if (subscribed.containsKey(event)) return;
 		String itemId = event.getAttribute("item id").getString();
+		
 		if (subGroup != null) {
 			try {
 				subGroup.validateItems(itemId);
@@ -535,6 +580,16 @@ public class ComServer extends OpcServer {
 				LOGGER.debug("", e);
 			}
 		}
+		if (access != null) {
+			try {
+				access.addItem(itemId, callbackSync);
+			} catch (JIException e) {
+				LOGGER.debug("", e);
+			} catch (AddFailedException e) {
+				LOGGER.debug("", e);
+			}
+		}
+		
 		if (!subscribed.containsKey(event)) {
 			subscribed.put(event, new ItemWrap(null));
 		}
@@ -544,7 +599,7 @@ public class ComServer extends OpcServer {
 	public void removeItemSub(Node event) {
 		subscribed.remove(event);
 		String itemId = event.getAttribute("item id").getString();
-//		if (access != null) access.removeItem(itemId);
+		
 		if (subGroup != null)
 			try {
 				subGroup.removeItem(itemId);
@@ -555,6 +610,7 @@ public class ComServer extends OpcServer {
 			} catch (JIException e) {
 				LOGGER.debug("", e);
 			}
+		if (access != null) access.removeItem(itemId);
 		
 	}
 	
@@ -566,6 +622,20 @@ public class ComServer extends OpcServer {
 				subGroup.validateItems(itemId);
 				Item i = subGroup.addItem(itemId);
 				subscribed.put(n, new ItemWrap(i));
+			} catch (JIException e) {
+				LOGGER.debug("", e);
+			} catch (AddFailedException e) {
+				LOGGER.debug("", e);
+			}
+		}
+	}
+	
+	private void populateAccess() {
+		if (access == null) return;
+		for (Node n: subscribed.keySet()) {
+			String itemId = n.getAttribute("item id").getString();
+			try {
+				access.addItem(itemId, callbackSync);
 			} catch (JIException e) {
 				LOGGER.debug("", e);
 			} catch (AddFailedException e) {
