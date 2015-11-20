@@ -232,9 +232,13 @@ public class ComServer extends OpcServer {
 	
 	@Override
 	protected void stop() {
+		
+		subscribed.clear();
+		
 		if (subGroup != null) {
 			try {
 				subGroup.setActive(false);
+				subGroup = null;
 			} catch (JIException e) {
 				LOGGER.debug("", e);
 			}
@@ -243,6 +247,7 @@ public class ComServer extends OpcServer {
 		if (access != null) {
 			try {
 				access.unbind();
+				access = null;
 			} catch (JIException e) {
 				LOGGER.debug("", e);
 			}
@@ -548,6 +553,7 @@ public class ComServer extends OpcServer {
 	private class SyncItemCallback implements DataCallback {
 
 		public void changed(Item item, ItemState itemState) {
+			LOGGER.debug("dataChange: "+item.getId()+" : "+itemState.getValue());
 			Node itemNode = itemNodes.get(item.getId());
 			JIVariant ji = itemState.getValue();
 			
