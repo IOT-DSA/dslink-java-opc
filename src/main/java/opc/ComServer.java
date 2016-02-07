@@ -177,7 +177,14 @@ public class ComServer extends OpcServer {
 	@Override
 	protected void onConnected() {
 		try {
-			buildTree();
+			if (node.getAttribute("discover").getBool()) buildTree();
+			else {
+				Action act = new Action(Permission.READ, new AddItemHandler());
+				act.addParameter(new Parameter("item id", ValueType.STRING));
+				Node anode = node.getChild("add item");
+				if (anode == null) node.createChild("add item").setAction(act).setSerializable(false).build();
+				else anode.setAction(act);
+			}
 		} catch (IllegalArgumentException e) {
 			LOGGER.debug("", e);
 		} catch (UnknownHostException e) {
@@ -223,6 +230,7 @@ public class ComServer extends OpcServer {
 
 		act.addParameter(new Parameter("server cls id (manual entry)", ValueType.STRING, node.getAttribute("server cls id")));
 		act.addParameter(new Parameter("polling interval", ValueType.NUMBER, node.getAttribute("polling interval")));
+		act.addParameter(new Parameter("discover", ValueType.BOOL, node.getAttribute("discover")));
 		return act;
 	}
 
@@ -238,12 +246,14 @@ public class ComServer extends OpcServer {
 			}
 			Value clsid = event.getParameter("server cls id (manual entry)");
 			double interval = event.getParameter("polling interval", ValueType.NUMBER).getNumber().doubleValue();
+			boolean disc = event.getParameter("discover", ValueType.BOOL).getBool();
 			
 			if (name!=null && name.length()>0 && !name.equals(node.getName())) {
 				Node newNode = node.getParent().createChild(name).build();
 				newNode.setAttribute("server prog id", new Value(progId));
 				if (clsid != null && clsid.getString() != null && clsid.getString().length()>0) newNode.setAttribute("server cls id", clsid);
 				newNode.setAttribute("polling interval", new Value(interval));
+				newNode.setAttribute("discover", new Value(disc));
 				ComServer os = new ComServer(conn, newNode);
 				remove();
 				os.restoreLastSession();
@@ -253,10 +263,28 @@ public class ComServer extends OpcServer {
 				if (clsid != null && clsid.getString() != null && clsid.getString().length()>0) node.setAttribute("server cls id", clsid);
 				else node.removeAttribute("server cls id");
 				node.setAttribute("polling interval", new Value(interval));
+				node.setAttribute("discover", new Value(disc));
 			
 				stop();
 				init();
 			}
+		}
+	}
+	
+	private class AddItemHandler implements Handler<ActionResult> {
+		public void handle(ActionResult event) {
+			String itemId = event.getParameter("item id", ValueType.STRING).getString();
+			Node lvlNode = node;
+			for (String lvl: itemId.split("\\.")) {
+				Node ln = lvlNode.getChild(lvl);
+				if (ln != null) lvlNode = ln;
+				else lvlNode = lvlNode.createChild(lvl).build();
+			}
+			lvlNode.setValueType(ValueType.STRING);
+			lvlNode.setAttribute("item id", new Value(itemId));
+			lvlNode.setAttribute("accessRights", new Value("readWritable"));
+			setupNode(lvlNode);
+            if (node.getLink().getSubscriptionManager().hasValueSub(lvlNode)) addItemSub(lvlNode);
 		}
 	}
 	
@@ -291,6 +319,8 @@ public class ComServer extends OpcServer {
 			server.disconnect();
 			server = null;
 		}
+		
+		node.removeChild("add item");
 		
 		super.stop();
 	}

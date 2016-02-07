@@ -86,6 +86,7 @@ public class OpcConn {
 		}
 		act.addParameter(new Parameter("server cls id (manual entry)", ValueType.STRING).setDescription("If left blank, will be determined automatically, using prog id"));
 		act.addParameter(new Parameter("polling interval", ValueType.NUMBER, new Value(1)).setDescription("set this to 0 for subscription"));
+		act.addParameter(new Parameter("discover", ValueType.BOOL));
 		return act;
 	}
 	
@@ -161,11 +162,13 @@ public class OpcConn {
 			}
 			Value clsid = event.getParameter("server cls id (manual entry)");
 			double interval = event.getParameter("polling interval", ValueType.NUMBER).getNumber().doubleValue();
+			boolean discover = event.getParameter("discover", ValueType.BOOL).getBool();
 			
 			Node child = node.createChild(name).build();
 			child.setAttribute("server prog id", new Value(progId));
 			if (clsid != null && clsid.getString() != null && clsid.getString().length()>0) child.setAttribute("server cls id", clsid);
 			child.setAttribute("polling interval", new Value(interval));
+			child.setAttribute("discover", new Value(discover));
 			ComServer os = new ComServer(getMe(), child);
 			os.init();
 		}
