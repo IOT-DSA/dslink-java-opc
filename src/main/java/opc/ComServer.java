@@ -617,6 +617,13 @@ public class ComServer extends OpcServer {
 			Node itemNode = itemNodes.get(item.getId());
 			JIVariant ji = itemState.getValue();
 			
+			if (ji == null ||  itemState.getErrorCode() != 0 || itemState.getQuality() <= 28) {
+				LOGGER.debug("Bad Read, setting value to null");
+				itemNode.setValueType(ValueType.STRING);
+				itemNode.setValue(new Value(""));
+				return;
+			}
+			
 			try {
 				Entry<ValueType, Value> entry = getValueFromJI(ji);
 				

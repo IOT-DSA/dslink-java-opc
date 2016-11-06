@@ -195,7 +195,9 @@ public class OpcConn {
 			Value url = child.getAttribute("url");
 			Value service  = child.getAttribute("service name");
 			Value interval = child.getAttribute("polling interval");
+			Value discover = child.getAttribute("discover");
 			if (progId != null && interval != null) {
+				if (discover == null) child.setAttribute("discover", new Value(false));
 				ComServer os = new ComServer(getMe(), child);
 				os.restoreLastSession();
 			} else if (url != null && service != null) {
