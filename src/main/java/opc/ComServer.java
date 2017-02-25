@@ -560,12 +560,18 @@ public class ComServer extends OpcServer {
 		private void changed(Item item, ValueData data, Node itemNode) throws JIException {
 				
 				JIVariant ji = data.getValue();
-				
 				Entry<ValueType, Value> entry = getValueFromJI(ji);
 				
+				short quality = data.getQuality();
+				
+				itemNode.setAttribute("quality", new Value(quality));
+				String qualityString = Utils.qualityCodes.get(quality);
+				if (qualityString == null) {
+					qualityString = "";
+				}
+				itemNode.setAttribute("qualityString", new Value(qualityString));
 				itemNode.setValueType(entry.getKey());
 				itemNode.setValue(entry.getValue());
-
 	    }
 
 		public void dataChange(int transactionId, int serverGroupHandle, int masterQuality, int masterErrorCode, KeyedResultSet<Integer, ValueData> result) {
@@ -616,8 +622,16 @@ public class ComServer extends OpcServer {
 			LOGGER.debug("dataChange: "+item.getId()+" : "+itemState.getValue());
 			Node itemNode = itemNodes.get(item.getId());
 			JIVariant ji = itemState.getValue();
+			short quality = itemState.getQuality();
 			
-			if (ji == null ||  itemState.getErrorCode() != 0 || itemState.getQuality() <= 28) {
+			itemNode.setAttribute("quality", new Value(quality));
+			String qualityString = Utils.qualityCodes.get(quality);
+			if (qualityString == null) {
+				qualityString = "";
+			}
+			itemNode.setAttribute("qualityString", new Value(qualityString));
+			
+			if (ji == null ||  itemState.getErrorCode() != 0 || quality <= 28) {
 				LOGGER.debug("Bad Read, setting value to null");
 				itemNode.setValueType(ValueType.STRING);
 				itemNode.setValue(new Value(""));
