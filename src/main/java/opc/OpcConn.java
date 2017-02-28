@@ -19,6 +19,7 @@ import org.openscada.opc.lib.list.Category;
 import org.openscada.opc.lib.list.ServerList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.dsa.iot.dslink.util.StringUtils;
 import org.dsa.iot.dslink.util.handler.Handler;
 
 public class OpcConn {
@@ -35,7 +36,7 @@ public class OpcConn {
 		this.node = node;
 		
 		Action act = new Action(Permission.READ, new RemoveHandler());
-		node.createChild("remove").setAction(act).build().setSerializable(false);
+		node.createChild("remove", true).setAction(act).build().setSerializable(false);
 	}
 	
 	void init() {
@@ -46,26 +47,26 @@ public class OpcConn {
 		String pass = node.getAttribute("password").getString();
 		
 		Action act = getEditAction(host, domain, user, pass);
-		Node anode = node.getChild("edit");
-		if (anode == null) node.createChild("edit").setAction(act).build().setSerializable(false);
+		Node anode = node.getChild("edit", true);
+		if (anode == null) node.createChild("edit", true).setAction(act).build().setSerializable(false);
 		else anode.setAction(act);
 		
 		act = new Action(Permission.READ, new RefreshHandler());
-		anode = node.getChild("refresh");
-		if (anode == null) node.createChild("refresh").setAction(act).build().setSerializable(false);
+		anode = node.getChild("refresh", true);
+		if (anode == null) node.createChild("refresh", true).setAction(act).build().setSerializable(false);
 		else anode.setAction(act);
 		
 		act = getAddServerAction(host, domain, user, pass);
-		anode = node.getChild("add server");
-		if (anode == null) node.createChild("add server").setAction(act).build().setSerializable(false);
+		anode = node.getChild("add server", true);
+		if (anode == null) node.createChild("add server", true).setAction(act).build().setSerializable(false);
 		else anode.setAction(act);
 		
 		act = new Action(Permission.READ, new AddXmlHandler());
 		act.addParameter(new Parameter("name", ValueType.STRING, new Value("OpcXmlDaSrv")));
 		act.addParameter(new Parameter("url", ValueType.STRING, new Value("http://advosol.com/XMLDADemo/ts_sim/OpcDaGateway.asmx")));
 		act.addParameter(new Parameter("service name", ValueType.STRING, new Value("OpcXmlDaSrv")));
-		anode = node.getChild("add xml-da server");
-		if (anode == null) node.createChild("add xml-da server").setAction(act).build().setSerializable(false);
+		anode = node.getChild("add xml-da server", true);
+		if (anode == null) node.createChild("add xml-da server", true).setAction(act).build().setSerializable(false);
 		else anode.setAction(act);
 	}
 	
@@ -108,7 +109,7 @@ public class OpcConn {
 	
 	private void remove() {
 		node.clearChildren();
-		node.getParent().removeChild(node);
+		node.getParent().removeChild(node, false);
 	}
 	
 	private class EditHandler implements Handler<ActionResult> {
@@ -136,9 +137,9 @@ public class OpcConn {
 		JsonObject jobj = link.copySerializer.serialize();
 		JsonObject parentobj = jobj;
 		JsonObject nodeobj = parentobj.get(node.getName());
-		parentobj.put(name, nodeobj);
+		parentobj.put(StringUtils.encodeName(name), nodeobj);
 		link.copyDeserializer.deserialize(jobj);
-		Node newnode = node.getParent().getChild(name);
+		Node newnode = node.getParent().getChild(name, true);
 		OpcConn oc = new OpcConn(link, newnode);
 		remove();
 		oc.restoreLastSession();
@@ -164,7 +165,7 @@ public class OpcConn {
 			double interval = event.getParameter("polling interval", ValueType.NUMBER).getNumber().doubleValue();
 			boolean discover = event.getParameter("discover", ValueType.BOOL).getBool();
 			
-			Node child = node.createChild(name).build();
+			Node child = node.createChild(name, true).build();
 			child.setAttribute("server prog id", new Value(progId));
 			if (clsid != null && clsid.getString() != null && clsid.getString().length()>0) child.setAttribute("server cls id", clsid);
 			child.setAttribute("polling interval", new Value(interval));
@@ -179,7 +180,7 @@ public class OpcConn {
 			String name = event.getParameter("name", ValueType.STRING).getString();
 			String url = event.getParameter("url", ValueType.STRING).getString();
 			String servname = event.getParameter("service name", ValueType.STRING).getString();
-			Node child = node.createChild(name).build();
+			Node child = node.createChild(name, true).build();
 			child.setAttribute("url", new Value(url));
 			child.setAttribute("service name", new Value(servname));
 			XmlServer os = new XmlServer(getMe(), child);
@@ -204,7 +205,7 @@ public class OpcConn {
 				XmlServer os = new XmlServer(getMe(), child);
 				os.restoreLastSession();
 			} else if (child.getAction() == null) {
-				node.removeChild(child);
+				node.removeChild(child, false);
 			}
 		}
 		

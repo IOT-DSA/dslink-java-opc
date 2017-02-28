@@ -34,11 +34,11 @@ public abstract class OpcServer {
 		this.node = n;
 		this.stopped = false;
 		
-		this.statnode = node.createChild("STATUS").setValueType(ValueType.STRING).setValue(new Value("")).build();
+		this.statnode = node.createChild("STATUS", true).setValueType(ValueType.STRING).setValue(new Value("")).build();
 		this.statnode.setSerializable(false);
 		
 		Action act = new Action(Permission.READ, new RemoveHandler());
-		node.createChild("remove").setAction(act).build().setSerializable(false);
+		node.createChild("remove", true).setAction(act).build().setSerializable(false);
 	}
 	
 	void init() {
@@ -52,19 +52,19 @@ public abstract class OpcServer {
 		clear();
 		
 		Action act = getEditAction(host, domain, user, pass);
-		Node anode = node.getChild("edit");
-		if (anode == null) node.createChild("edit").setAction(act).build().setSerializable(false);
+		Node anode = node.getChild("edit", true);
+		if (anode == null) node.createChild("edit", true).setAction(act).build().setSerializable(false);
 		else anode.setAction(act);
 		
 		connect(host, domain, user, pass);
 		
 		if (!stopped) {
         	statnode.setValue(new Value("Connected"));
-        	node.removeChild("connect");
+        	node.removeChild("connect", true);
         	
         	act = new Action(Permission.READ, new RefreshHandler());
-    		anode = node.getChild("refresh");
-    		if (anode == null) node.createChild("refresh").setAction(act).build().setSerializable(false);
+    		anode = node.getChild("refresh", true);
+    		if (anode == null) node.createChild("refresh", true).setAction(act).build().setSerializable(false);
     		else anode.setAction(act);
     		
     		act = new Action(Permission.READ, new Handler<ActionResult>(){
@@ -72,15 +72,15 @@ public abstract class OpcServer {
     				stop();
     			}
     		});
-    		anode = node.getChild("disconnect");
-    		if (anode == null) node.createChild("disconnect").setAction(act).build().setSerializable(false);
+    		anode = node.getChild("disconnect", true);
+    		if (anode == null) node.createChild("disconnect", true).setAction(act).build().setSerializable(false);
     		else anode.setAction(act);
     		
     		onConnected();
 		} else {
         	act = new Action(Permission.READ, new RefreshHandler());
-    		anode = node.getChild("connect");
-    		if (anode == null) node.createChild("connect").setAction(act).build().setSerializable(false);
+    		anode = node.getChild("connect", true);
+    		if (anode == null) node.createChild("connect", true).setAction(act).build().setSerializable(false);
     		else anode.setAction(act);
         }
 	}
@@ -95,7 +95,7 @@ public abstract class OpcServer {
 		itemNodes.clear();
 		if (node.getChildren() != null) {
 			for (Node child: node.getChildren().values()) {
-				if (child.getAction() == null && !child.getName().equals("STATUS")) node.removeChild(child);
+				if (child.getAction() == null && !child.getName().equals("STATUS")) node.removeChild(child, false);
 			}
 		}
 	} 
@@ -146,18 +146,18 @@ public abstract class OpcServer {
 	protected void remove() {
 		stop();
 		node.clearChildren();
-		node.getParent().removeChild(node);
+		node.getParent().removeChild(node, false);
 	}
 	
 	protected void stop() {
 		stopped = true;
 		statnode.setValue(new Value("Not Connected"));
 		clear();
-		node.removeChild("refresh");
-		node.removeChild("disconnect");
+		node.removeChild("refresh", true);
+		node.removeChild("disconnect", true);
 		Action act = new Action(Permission.READ, new RefreshHandler());
-		Node anode = node.getChild("connect");
-		if (anode == null) node.createChild("connect").setAction(act).build().setSerializable(false);
+		Node anode = node.getChild("connect", true);
+		if (anode == null) node.createChild("connect", true).setAction(act).build().setSerializable(false);
 		else anode.setAction(act);
 	}
 	

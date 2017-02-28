@@ -50,7 +50,7 @@ public class Main extends DSLinkHandler {
         Node n = superRoot;
         int i = 0;
         while (i < split.length) {        	
-        	n = n.getChild(split[i]);
+        	n = n.getChild(split[i], false);
         	n.getListener().postListUpdate();
         	i++;
         }
@@ -69,7 +69,7 @@ public class Main extends DSLinkHandler {
         Node n = superRoot;
         int i = 0;
         while (i < split.length) {        	
-        	n = n.getChild(split[i]);
+        	n = n.getChild(split[i], false);
         	n.getListener().postListUpdate();
         	i++;
         }

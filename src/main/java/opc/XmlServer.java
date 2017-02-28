@@ -117,7 +117,7 @@ public class XmlServer extends OpcServer {
 			String url = event.getParameter("url", ValueType.STRING).getString();
 			String serv = event.getParameter("service name", ValueType.STRING).getString();
 			if (name!=null && name.length()>0 && !name.equals(node.getName())) {
-				Node newNode = node.getParent().createChild(name).build();
+				Node newNode = node.getParent().createChild(name, true).build();
 				newNode.setAttribute("url", new Value(url));
 				newNode.setAttribute("service name", new Value(serv));
 				XmlServer os = new XmlServer(conn, newNode);
@@ -146,7 +146,7 @@ public class XmlServer extends OpcServer {
 			 for ( final BrowseEntry entry : entries ) {
 				 Node child = null;
                  if (entry.isItem()) {
-                	 child = parent.createChild(entry.getName()).setValueType(ValueType.STRING).build();
+                	 child = parent.createChild(entry.getName(), true).setValueType(ValueType.STRING).build();
                 	 child.setAttribute("item id", new Value(entry.getItemName()));
                 	 child.setAttribute("item path", new Value(entry.getItemPath()));
                 	 
@@ -178,7 +178,7 @@ public class XmlServer extends OpcServer {
                 	 if (child.getLink().getSubscriptionManager().hasValueSub(child)) addItemSub(child);
                  }
                  if (entry.isParent()) {
-                	 if (child == null) child = parent.createChild(entry.getName()).build();
+                	 if (child == null) child = parent.createChild(entry.getName(), true).build();
                 	 if (LAZY_LOAD) {
                 		 child.getListener().setOnListHandler(new Handler<Node>() {
                 			 private boolean loaded = false;

@@ -181,8 +181,8 @@ public class ComServer extends OpcServer {
 			else {
 				Action act = new Action(Permission.READ, new AddItemHandler());
 				act.addParameter(new Parameter("item id", ValueType.STRING));
-				Node anode = node.getChild("add item");
-				if (anode == null) node.createChild("add item").setAction(act).setSerializable(false).build();
+				Node anode = node.getChild("add item", true);
+				if (anode == null) node.createChild("add item", true).setAction(act).setSerializable(false).build();
 				else anode.setAction(act);
 			}
 		} catch (IllegalArgumentException e) {
@@ -249,7 +249,7 @@ public class ComServer extends OpcServer {
 			boolean disc = event.getParameter("discover", ValueType.BOOL).getBool();
 			
 			if (name!=null && name.length()>0 && !name.equals(node.getName())) {
-				Node newNode = node.getParent().createChild(name).build();
+				Node newNode = node.getParent().createChild(name, true).build();
 				newNode.setAttribute("server prog id", new Value(progId));
 				if (clsid != null && clsid.getString() != null && clsid.getString().length()>0) newNode.setAttribute("server cls id", clsid);
 				newNode.setAttribute("polling interval", new Value(interval));
@@ -276,9 +276,9 @@ public class ComServer extends OpcServer {
 			String itemId = event.getParameter("item id", ValueType.STRING).getString();
 			Node lvlNode = node;
 			for (String lvl: itemId.split("\\.")) {
-				Node ln = lvlNode.getChild(lvl);
+				Node ln = lvlNode.getChild(lvl, true);
 				if (ln != null) lvlNode = ln;
-				else lvlNode = lvlNode.createChild(lvl).build();
+				else lvlNode = lvlNode.createChild(lvl, true).build();
 			}
 			lvlNode.setValueType(ValueType.STRING);
 			lvlNode.setAttribute("item id", new Value(itemId));
@@ -320,7 +320,7 @@ public class ComServer extends OpcServer {
 			server = null;
 		}
 		
-		node.removeChild("add item");
+		node.removeChild("add item", true);
 		
 		super.stop();
 	}
@@ -346,14 +346,14 @@ public class ComServer extends OpcServer {
 	private void dumpTree (final Branch branch, Node branchNode) {
 		
         for (final Leaf leaf : branch.getLeaves()) {
-            Node child = branchNode.createChild(leaf.getName()).setValueType(ValueType.STRING).build();
+            Node child = branchNode.createChild(leaf.getName(), true).setValueType(ValueType.STRING).build();
             child.setAttribute("item id", new Value(leaf.getItemId()));
             child.setAttribute("accessRights", new Value("readWritable"));
             setupNode(child);
             if (node.getLink().getSubscriptionManager().hasValueSub(child)) addItemSub(child);
         }
         for (final Branch subBranch : branch.getBranches()) {
-            Node child = branchNode.createChild(subBranch.getName()).build();
+            Node child = branchNode.createChild(subBranch.getName(), true).build();
         	if (LAZY_LOAD) {
         		child.getListener().setOnListHandler(new Handler<Node>() {
         			private boolean loaded = false;

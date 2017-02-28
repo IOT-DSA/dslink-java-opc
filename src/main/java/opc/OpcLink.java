@@ -39,7 +39,7 @@ public class OpcLink {
 		act.addParameter(new Parameter("domain", ValueType.STRING, new Value("")).setPlaceHolder("localhost"));
 		act.addParameter(new Parameter("user", ValueType.STRING, new Value("")).setPlaceHolder("Username"));
 		act.addParameter(new Parameter("password", ValueType.STRING, new Value("")).setEditorType(EditorType.PASSWORD));
-		node.createChild("add connection").setAction(act).build().setSerializable(false);
+		node.createChild("add connection", true).setAction(act).build().setSerializable(false);
 		
 	}
 	
@@ -54,7 +54,7 @@ public class OpcLink {
 				OpcConn conn = new OpcConn(getMe(), child);
 				conn.restoreLastSession();
 			} else {
-				node.removeChild(child);
+				node.removeChild(child, false);
 			}
 		}
 		
@@ -68,7 +68,7 @@ public class OpcLink {
 			String user = event.getParameter("user", new Value("")).getString();
 			String password = event.getParameter("password", new Value("")).getString();
 			
-			Node child = node.createChild(name).build();
+			Node child = node.createChild(name, true).build();
 			child.setAttribute("host", new Value(host));
 			child.setAttribute("domain", new Value(domain));
 			child.setAttribute("user", new Value(user));
