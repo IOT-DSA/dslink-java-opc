@@ -42,6 +42,7 @@ import org.openscada.opc.lib.da.ItemState;
 import org.openscada.opc.lib.da.Server;
 import org.openscada.opc.lib.da.SyncAccess;
 import org.openscada.opc.lib.da.browser.Branch;
+import org.openscada.opc.lib.da.browser.FlatBrowser;
 import org.openscada.opc.lib.da.browser.Leaf;
 import org.openscada.opc.lib.da.browser.TreeBrowser;
 import org.openscada.opc.lib.list.Categories;
@@ -185,11 +186,8 @@ public class ComServer extends OpcServer {
 				if (anode == null) node.createChild("add item", true).setAction(act).setSerializable(false).build();
 				else anode.setAction(act);
 			}
-		} catch (IllegalArgumentException e) {
-			LOGGER.debug("", e);
-		} catch (UnknownHostException e) {
-			LOGGER.debug("", e);
-		} catch (JIException e) {
+		} catch (Exception e) {
+			LOGGER.warn(node.getName() + ": error during discovery");
 			LOGGER.debug("", e);
 		}
 //		Value intval = node.getAttribute("refresh interval");
@@ -337,9 +335,16 @@ public class ComServer extends OpcServer {
 	
 	private void buildTree() throws IllegalArgumentException, UnknownHostException, JIException {
 		final TreeBrowser treeBrowser = server.getTreeBrowser();
-        if ( treeBrowser != null )
-        {
+        if ( treeBrowser != null ) {
             dumpTree(treeBrowser.browse(), node);
+        } else {
+        	LOGGER.info(node.getName() + ": Hierarchical browsing not supported, trying flat browsing");
+        	final FlatBrowser flatBrowser = server.getFlatBrowser();
+        	if (flatBrowser != null) {
+        		dumpFlatTree(flatBrowser.browse());
+        	} else {
+        		LOGGER.warn(node.getName() + ": auto discovery not supported");
+        	}
         }
 	}
 	
@@ -367,6 +372,16 @@ public class ComServer extends OpcServer {
         	}
         }
     }
+	
+	private void dumpFlatTree(Collection<String> tags) {
+		for (String tag: tags) {
+			Node child = node.createChild(tag, true).setValueType(ValueType.STRING).build();
+            child.setAttribute("item id", new Value(tag));
+            child.setAttribute("accessRights", new Value("readWritable"));
+            setupNode(child);
+            if (node.getLink().getSubscriptionManager().hasValueSub(child)) addItemSub(child);
+		}
+	}
 	
 	public static String getClsId(String host, String domain, String user, String password,  String progId)
             throws IllegalArgumentException, UnknownHostException, JIException {
