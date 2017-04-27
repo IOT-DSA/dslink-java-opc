@@ -231,7 +231,7 @@ public class ComServer extends OpcServer {
 		}
 
 		act.addParameter(new Parameter("server cls id (manual entry)", ValueType.STRING, node.getAttribute("server cls id")));
-		act.addParameter(new Parameter("polling interval", ValueType.NUMBER, node.getAttribute("polling interval")));
+		act.addParameter(new Parameter("polling interval", ValueType.NUMBER, node.getAttribute("polling interval")).setDescription("Polling interval in seconds. Set this to 0 for subscription."));
 		act.addParameter(new Parameter("discover", ValueType.BOOL, node.getAttribute("discover")));
 		return act;
 	}

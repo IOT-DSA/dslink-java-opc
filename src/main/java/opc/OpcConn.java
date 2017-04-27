@@ -86,7 +86,7 @@ public class OpcConn {
 			act.addParameter(new Parameter("server prog id", ValueType.STRING).setPlaceHolder("Matrikon.OPC.Simulation.1"));
 		}
 		act.addParameter(new Parameter("server cls id (manual entry)", ValueType.STRING).setDescription("If left blank, will be determined automatically, using prog id"));
-		act.addParameter(new Parameter("polling interval", ValueType.NUMBER, new Value(1)).setDescription("set this to 0 for subscription"));
+		act.addParameter(new Parameter("polling interval", ValueType.NUMBER, new Value(1)).setDescription("Polling interval in seconds. Set this to 0 for subscription."));
 		act.addParameter(new Parameter("discover", ValueType.BOOL));
 		return act;
 	}
