@@ -14,6 +14,13 @@ import org.dsa.iot.dslink.util.handler.Handler;
 
 public class OpcLink {
 	
+	private static final java.util.logging.Logger jiLogger;
+	
+	static {
+		jiLogger = java.util.logging.Logger.getLogger("org.jinterop");
+		jiLogger.setLevel(java.util.logging.Level.OFF);
+	}
+	
 	private Node node;
 	
 	Serializer copySerializer;

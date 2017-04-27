@@ -5,7 +5,7 @@ import java.util.Map;
 
 public class Utils {
 	
-	public static final Map<Short, String> qualityCodes = new HashMap<Short, String>();
+	static final Map<Short, String> qualityCodes = new HashMap<Short, String>();
 	
 	static {
 		qualityCodes.put((short)0, "Bad [Non-Specific]");

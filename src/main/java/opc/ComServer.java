@@ -1,7 +1,11 @@
 package opc;
 
 import java.net.UnknownHostException;
+import java.text.DateFormat;
+import java.text.ParsePosition;
+import java.text.SimpleDateFormat;
 import java.util.AbstractMap;
+import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Map;
@@ -585,6 +589,9 @@ public class ComServer extends OpcServer {
 					qualityString = "";
 				}
 				itemNode.setAttribute("qualityString", new Value(qualityString));
+				Calendar ts = data.getTimestamp();
+				DateFormat dateFormat = new W3CDateFormat("yyyy-MM-dd'T'HH:mm:ssZ");
+				itemNode.setAttribute("timestamp", new Value(dateFormat.format(ts.getTime())));
 				itemNode.setValueType(entry.getKey());
 				itemNode.setValue(entry.getValue());
 	    }
@@ -631,6 +638,18 @@ public class ComServer extends OpcServer {
 		}
 	}
 	
+	private static class W3CDateFormat extends SimpleDateFormat {
+		private static final long serialVersionUID = 1L;
+
+		public W3CDateFormat(String string) {
+			super(string);
+		}
+
+		public Date parse(String source, ParsePosition pos) {    
+	        return super.parse(source.replaceFirst(":(?=[0-9]{2}$)",""),pos);
+	    }
+	}
+	
 	private class SyncItemCallback implements DataCallback {
 
 		public void changed(Item item, ItemState itemState) {
@@ -638,6 +657,7 @@ public class ComServer extends OpcServer {
 			Node itemNode = itemNodes.get(item.getId());
 			JIVariant ji = itemState.getValue();
 			short quality = itemState.getQuality();
+			Calendar ts = itemState.getTimestamp();
 			
 			itemNode.setAttribute("quality", new Value(quality));
 			String qualityString = Utils.qualityCodes.get(quality);
@@ -645,6 +665,8 @@ public class ComServer extends OpcServer {
 				qualityString = "";
 			}
 			itemNode.setAttribute("qualityString", new Value(qualityString));
+			DateFormat dateFormat = new W3CDateFormat("yyyy-MM-dd'T'HH:mm:ssZ");
+			itemNode.setAttribute("timestamp", new Value(dateFormat.format(ts.getTime())));
 			
 			if (ji == null ||  itemState.getErrorCode() != 0 || quality <= 28) {
 				LOGGER.debug("Bad Read, setting value to null");

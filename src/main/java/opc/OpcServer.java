@@ -16,10 +16,7 @@ import org.slf4j.LoggerFactory;
 import org.dsa.iot.dslink.util.handler.Handler;
 
 public abstract class OpcServer {
-	protected static final Logger LOGGER;
-	static {
-		LOGGER = LoggerFactory.getLogger(OpcServer.class);
-	}
+	protected static final Logger LOGGER = LoggerFactory.getLogger(OpcServer.class);
 	
 	protected static final boolean LAZY_LOAD = true;
 	
