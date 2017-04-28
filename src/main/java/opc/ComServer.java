@@ -181,30 +181,22 @@ public class ComServer extends OpcServer {
 	
 	@Override
 	protected void onConnected() {
-		try {
-			if (node.getAttribute("discover").getBool()) buildTree();
-			else {
-				Action act = new Action(Permission.READ, new AddItemHandler());
-				act.addParameter(new Parameter("item id", ValueType.STRING));
-				Node anode = node.getChild("add item", true);
-				if (anode == null) node.createChild("add item", true).setAction(act).setSerializable(false).build();
-				else anode.setAction(act);
+			Action act = new Action(Permission.READ, new AddItemHandler());
+			act.addParameter(new Parameter("item id", ValueType.STRING));
+			Node anode = node.getChild("add item", true);
+			if (anode == null) node.createChild("add item", true).setAction(act).setSerializable(false).build();
+			else anode.setAction(act);
+			
+			act = new Action(Permission.READ, new DiscoveryHandler());
+			anode = node.getChild("discover", true);
+			if (anode == null) node.createChild("discover", true).setAction(act).setSerializable(false).build();
+			else anode.setAction(act);
+
+			for (Entry<String, Node> entry: itemNodes.entrySet()) {
+				if (node.getLink().getSubscriptionManager().hasValueSub(entry.getValue())) {
+					addItemSub(entry.getValue());
+				}
 			}
-		} catch (Exception e) {
-			LOGGER.warn(node.getName() + ": error during discovery");
-			LOGGER.debug("", e);
-		}
-//		Value intval = node.getAttribute("refresh interval");
-//		if (intval == null) return;
-//		long interv = intval.getNumber().longValue();
-//		if (interv <= 0) return;
-//		ScheduledThreadPoolExecutor stpe = Objects.getDaemonThreadPool();
-//		stpe.schedule(new Runnable() {
-//			public void run() {
-//				stop();
-//				init();
-//			}
-//		}, interv, TimeUnit.MINUTES);
 	}
 
 	@Override
@@ -232,7 +224,6 @@ public class ComServer extends OpcServer {
 
 		act.addParameter(new Parameter("server cls id (manual entry)", ValueType.STRING, node.getAttribute("server cls id")));
 		act.addParameter(new Parameter("polling interval", ValueType.NUMBER, node.getAttribute("polling interval")).setDescription("Polling interval in seconds. Set this to 0 for subscription."));
-		act.addParameter(new Parameter("discover", ValueType.BOOL, node.getAttribute("discover")));
 		return act;
 	}
 
@@ -248,14 +239,12 @@ public class ComServer extends OpcServer {
 			}
 			Value clsid = event.getParameter("server cls id (manual entry)");
 			double interval = event.getParameter("polling interval", ValueType.NUMBER).getNumber().doubleValue();
-			boolean disc = event.getParameter("discover", ValueType.BOOL).getBool();
 			
 			if (name!=null && name.length()>0 && !name.equals(node.getName())) {
 				Node newNode = node.getParent().createChild(name, true).build();
 				newNode.setAttribute("server prog id", new Value(progId));
 				if (clsid != null && clsid.getString() != null && clsid.getString().length()>0) newNode.setAttribute("server cls id", clsid);
 				newNode.setAttribute("polling interval", new Value(interval));
-				newNode.setAttribute("discover", new Value(disc));
 				ComServer os = new ComServer(conn, newNode);
 				remove();
 				os.restoreLastSession();
@@ -265,7 +254,6 @@ public class ComServer extends OpcServer {
 				if (clsid != null && clsid.getString() != null && clsid.getString().length()>0) node.setAttribute("server cls id", clsid);
 				else node.removeAttribute("server cls id");
 				node.setAttribute("polling interval", new Value(interval));
-				node.setAttribute("discover", new Value(disc));
 			
 				stop();
 				init();
@@ -273,21 +261,35 @@ public class ComServer extends OpcServer {
 		}
 	}
 	
+	private class DiscoveryHandler implements Handler<ActionResult> {
+		@Override
+		public void handle(ActionResult event) {
+			try {
+				buildTree();
+			} catch (Exception e) {
+				LOGGER.warn(node.getName() + ": error during discovery");
+				LOGGER.debug("", e);
+			}
+		}
+	}
+	
 	private class AddItemHandler implements Handler<ActionResult> {
 		public void handle(ActionResult event) {
 			String itemId = event.getParameter("item id", ValueType.STRING).getString();
-			Node lvlNode = node;
-			for (String lvl: itemId.split("\\.")) {
-				Node ln = lvlNode.getChild(lvl, true);
-				if (ln != null) lvlNode = ln;
-				else lvlNode = lvlNode.createChild(lvl, true).build();
-			}
-			lvlNode.setValueType(ValueType.STRING);
-			lvlNode.setAttribute("item id", new Value(itemId));
-			lvlNode.setAttribute("accessRights", new Value("readWritable"));
-			setupNode(lvlNode);
-            if (node.getLink().getSubscriptionManager().hasValueSub(lvlNode)) addItemSub(lvlNode);
+			addItem(itemId);
 		}
+	}
+	
+	private void addItem(String itemId) {
+		Node lvlNode = node;
+		for (String lvl: itemId.split("\\.")) {
+			Node ln = lvlNode.getChild(lvl, true);
+			if (ln != null) lvlNode = ln;
+			else lvlNode = lvlNode.createChild(lvl, true).build();
+		}
+		lvlNode.setValueType(ValueType.STRING);
+		lvlNode.setAttribute("item id", new Value(itemId));
+		setupNode(lvlNode);
 	}
 	
 	@Override
@@ -322,7 +324,7 @@ public class ComServer extends OpcServer {
 			server = null;
 		}
 		
-		node.removeChild("add item", true);
+//		node.removeChild("add item", true);
 		
 		super.stop();
 	}
@@ -355,14 +357,18 @@ public class ComServer extends OpcServer {
 	private void dumpTree (final Branch branch, Node branchNode) {
 		
         for (final Leaf leaf : branch.getLeaves()) {
-            Node child = branchNode.createChild(leaf.getName(), true).setValueType(ValueType.STRING).build();
+        	Node child = branchNode.getChild(leaf.getName(), true);
+            if (child == null) {
+            	child = branchNode.createChild(leaf.getName(), true).setValueType(ValueType.STRING).build();
+            } else {
+            	child.setValueType(ValueType.STRING);
+            }
             child.setAttribute("item id", new Value(leaf.getItemId()));
-            child.setAttribute("accessRights", new Value("readWritable"));
             setupNode(child);
-            if (node.getLink().getSubscriptionManager().hasValueSub(child)) addItemSub(child);
         }
         for (final Branch subBranch : branch.getBranches()) {
-            Node child = branchNode.createChild(subBranch.getName(), true).build();
+        	Node child = branchNode.getChild(subBranch.getName(), true);
+            if (child == null) child = branchNode.createChild(subBranch.getName(), true).build();
         	if (LAZY_LOAD) {
         		child.getListener().setOnListHandler(new Handler<Node>() {
         			private boolean loaded = false;
@@ -379,12 +385,14 @@ public class ComServer extends OpcServer {
 	
 	private void dumpFlatTree(Collection<String> tags) {
 		for (String tag: tags) {
-			Node child = node.createChild(tag, true).setValueType(ValueType.STRING).build();
-            child.setAttribute("item id", new Value(tag));
-            child.setAttribute("accessRights", new Value("readWritable"));
-            setupNode(child);
-            if (node.getLink().getSubscriptionManager().hasValueSub(child)) addItemSub(child);
+			addItem(tag);
 		}
+	}
+	
+	public void setupNode(final Node child) {
+		child.setAttribute("accessRights", new Value("readWritable"));
+        super.setupNode(child);
+        if (node.getLink().getSubscriptionManager().hasValueSub(child)) addItemSub(child);
 	}
 	
 	public static String getClsId(String host, String domain, String user, String password,  String progId)
@@ -531,7 +539,7 @@ public class ComServer extends OpcServer {
 		}
 		case JIVariant.VT_ERROR: {
 			vt = ValueType.STRING;
-			val = new Value(ji.getObjectAsSCODE());
+			val = new Value("Error Code " + Integer.toHexString(ji.getObjectAsSCODE()));
 			break;
 		}
 		default: {
@@ -578,22 +586,25 @@ public class ComServer extends OpcServer {
 	private class ItemCallback implements IOPCDataCallback {
 		private void changed(Item item, ValueData data, Node itemNode) throws JIException {
 				
-				JIVariant ji = data.getValue();
-				Entry<ValueType, Value> entry = getValueFromJI(ji);
-				
-				short quality = data.getQuality();
-				
-				itemNode.setAttribute("quality", new Value(quality));
-				String qualityString = Utils.qualityCodes.get(quality);
-				if (qualityString == null) {
-					qualityString = "";
-				}
-				itemNode.setAttribute("qualityString", new Value(qualityString));
-				Calendar ts = data.getTimestamp();
-				DateFormat dateFormat = new W3CDateFormat("yyyy-MM-dd'T'HH:mm:ssZ");
-				itemNode.setAttribute("timestamp", new Value(dateFormat.format(ts.getTime())));
-				itemNode.setValueType(entry.getKey());
-				itemNode.setValue(entry.getValue());
+			if (itemNode == null) {
+				return;
+			}
+			JIVariant ji = data.getValue();
+			Entry<ValueType, Value> entry = getValueFromJI(ji);
+			
+			short quality = data.getQuality();
+			
+			itemNode.setAttribute("quality", new Value(quality));
+			String qualityString = Utils.qualityCodes.get(quality);
+			if (qualityString == null) {
+				qualityString = "";
+			}
+			itemNode.setAttribute("qualityString", new Value(qualityString));
+			Calendar ts = data.getTimestamp();
+			DateFormat dateFormat = new W3CDateFormat("yyyy-MM-dd'T'HH:mm:ssZ");
+			itemNode.setAttribute("timestamp", new Value(dateFormat.format(ts.getTime())));
+			itemNode.setValueType(entry.getKey());
+			itemNode.setValue(entry.getValue());
 	    }
 
 		public void dataChange(int transactionId, int serverGroupHandle, int masterQuality, int masterErrorCode, KeyedResultSet<Integer, ValueData> result) {
@@ -655,6 +666,9 @@ public class ComServer extends OpcServer {
 		public void changed(Item item, ItemState itemState) {
 			LOGGER.debug("dataChange: "+item.getId()+" : "+itemState.getValue());
 			Node itemNode = itemNodes.get(item.getId());
+			if (itemNode == null) {
+				return;
+			}
 			JIVariant ji = itemState.getValue();
 			short quality = itemState.getQuality();
 			Calendar ts = itemState.getTimestamp();
@@ -764,6 +778,26 @@ public class ComServer extends OpcServer {
 				LOGGER.debug("", e);
 			} catch (AddFailedException e) {
 				LOGGER.debug("", e);
+			}
+		}
+	}
+	
+	public void restoreLastSession() {
+		super.restoreLastSession();
+		
+		restoreFolder(node);
+	}
+	
+	private void restoreFolder(Node fnode) {
+		if (fnode.getChildren() == null) {
+			return;
+		}
+		for (Node child: fnode.getChildren().values()) {
+			Value itemId = child.getAttribute("item id");
+			if (itemId != null) {
+				setupNode(child);
+			} else if (child.getAction() == null && child != statnode) {
+				restoreFolder(child);
 			}
 		}
 	}

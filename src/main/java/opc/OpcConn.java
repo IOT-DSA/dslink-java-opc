@@ -87,7 +87,6 @@ public class OpcConn {
 		}
 		act.addParameter(new Parameter("server cls id (manual entry)", ValueType.STRING).setDescription("If left blank, will be determined automatically, using prog id"));
 		act.addParameter(new Parameter("polling interval", ValueType.NUMBER, new Value(1)).setDescription("Polling interval in seconds. Set this to 0 for subscription."));
-		act.addParameter(new Parameter("discover", ValueType.BOOL));
 		return act;
 	}
 	
@@ -163,13 +162,11 @@ public class OpcConn {
 			}
 			Value clsid = event.getParameter("server cls id (manual entry)");
 			double interval = event.getParameter("polling interval", ValueType.NUMBER).getNumber().doubleValue();
-			boolean discover = event.getParameter("discover", ValueType.BOOL).getBool();
 			
 			Node child = node.createChild(name, true).build();
 			child.setAttribute("server prog id", new Value(progId));
 			if (clsid != null && clsid.getString() != null && clsid.getString().length()>0) child.setAttribute("server cls id", clsid);
 			child.setAttribute("polling interval", new Value(interval));
-			child.setAttribute("discover", new Value(discover));
 			ComServer os = new ComServer(getMe(), child);
 			os.init();
 		}
@@ -196,9 +193,7 @@ public class OpcConn {
 			Value url = child.getAttribute("url");
 			Value service  = child.getAttribute("service name");
 			Value interval = child.getAttribute("polling interval");
-			Value discover = child.getAttribute("discover");
 			if (progId != null && interval != null) {
-				if (discover == null) child.setAttribute("discover", new Value(false));
 				ComServer os = new ComServer(getMe(), child);
 				os.restoreLastSession();
 			} else if (url != null && service != null) {

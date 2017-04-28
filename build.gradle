@@ -5,7 +5,7 @@ apply plugin: 'java'
 mainClassName = 'opc.Main'
 sourceCompatibility = 1.7
 targetCompatibility = 1.7
-version = '0.2.14-SNAPSHOT'
+version = '0.2.15-SNAPSHOT'
 
 repositories {
 	flatDir { dirs 'lib' }

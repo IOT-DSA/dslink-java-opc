@@ -97,6 +97,7 @@ public class XmlServer extends OpcServer {
 			}
 			connection = null;
 		}
+		clear();
 		super.stop();
 	}
 
@@ -410,6 +411,9 @@ public class XmlServer extends OpcServer {
 		return null;
 	}
 	
-	
+	public void restoreLastSession() {
+		clear();
+		super.restoreLastSession();
+	}
 	
 }

@@ -18,7 +18,7 @@ import org.dsa.iot.dslink.util.handler.Handler;
 public abstract class OpcServer {
 	protected static final Logger LOGGER = LoggerFactory.getLogger(OpcServer.class);
 	
-	protected static final boolean LAZY_LOAD = true;
+	protected static final boolean LAZY_LOAD = false;
 	
 	protected final OpcConn conn;
 	protected final Node node;
@@ -45,9 +45,7 @@ public abstract class OpcServer {
 		String domain = conn.node.getAttribute("domain").getString();
 		String user = conn.node.getAttribute("user").getString();
 		String pass = conn.node.getAttribute("password").getString();
-		
-		clear();
-		
+				
 		Action act = getEditAction(host, domain, user, pass);
 		Node anode = node.getChild("edit", true);
 		if (anode == null) node.createChild("edit", true).setAction(act).build().setSerializable(false);
@@ -80,6 +78,15 @@ public abstract class OpcServer {
     		if (anode == null) node.createChild("connect", true).setAction(act).build().setSerializable(false);
     		else anode.setAction(act);
         }
+		
+		act = new Action(Permission.READ, new Handler<ActionResult>() {
+			public void handle(ActionResult event) {
+				clear();
+			}
+		});
+		anode = node.getChild("clear", true);
+		if (anode == null) node.createChild("clear", true).setAction(act).build().setSerializable(false);
+		else anode.setAction(act);
 	}
 	
 	protected abstract void connect(String host, String domain, String user, String pass);
@@ -119,6 +126,24 @@ public abstract class OpcServer {
 			child.setWritable(Writable.NEVER);
 		}
 		
+		Action act = new Action(Permission.READ, new Handler<ActionResult>() {
+			@Override
+			public void handle(ActionResult event) {
+				itemNodes.remove(child.getAttribute("item id").getString());
+				removeChildNode(child);
+			}
+		});
+		child.createChild("remove", true).setAction(act).build().setSerializable(false);
+		
+	}
+	
+	protected void removeChildNode(Node child) {
+		Node parent = child.getParent();
+		Map<String, Node> siblings = parent.getChildren();
+		child.delete(false);
+		if (parent != node && (siblings == null || siblings.isEmpty())) {
+			removeChildNode(parent);
+		}
 	}
 	
 	public abstract void addItemSub(Node event);
@@ -149,7 +174,7 @@ public abstract class OpcServer {
 	protected void stop() {
 		stopped = true;
 		statnode.setValue(new Value("Not Connected"));
-		clear();
+//		clear();
 		node.removeChild("refresh", true);
 		node.removeChild("disconnect", true);
 		Action act = new Action(Permission.READ, new RefreshHandler());
