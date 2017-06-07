@@ -5,7 +5,7 @@ apply plugin: 'java'
 mainClassName = 'opc.Main'
 sourceCompatibility = 1.7
 targetCompatibility = 1.7
-version = '0.2.15-SNAPSHOT'
+version = '0.2.16-SNAPSHOT'
 
 repositories {
 	flatDir { dirs 'lib' }
@@ -21,7 +21,7 @@ repositories {
 
 dependencies {
 
-    compile 'org.iot-dsa:dslink:0.17.1-SNAPSHOT'
+    compile 'org.iot-dsa:dslink:0.17.4-SNAPSHOT'
     compile 'commons-logging:commons-logging:1.1.1'
     compile 'org.apache.commons:commons-lang3:3.4'
     compile ':org.openscada.external:1+'
