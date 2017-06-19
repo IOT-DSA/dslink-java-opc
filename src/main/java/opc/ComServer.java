@@ -300,19 +300,19 @@ public class ComServer extends OpcServer {
 		if (subGroup != null) {
 			try {
 				subGroup.setActive(false);
-				subGroup = null;
-			} catch (JIException e) {
+			} catch (Exception e) {
 				LOGGER.debug("", e);
 			}
+			subGroup = null;
 		}
 		
 		if (access != null) {
 			try {
 				access.unbind();
-				access = null;
-			} catch (JIException e) {
+			} catch (Exception e) {
 				LOGGER.debug("", e);
 			}
+			access = null;
 		}
 		
 //		if (autoReconnectController != null) {
