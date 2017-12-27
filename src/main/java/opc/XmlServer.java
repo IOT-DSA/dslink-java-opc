@@ -83,6 +83,10 @@ public class XmlServer extends OpcServer {
 		connection.createRootBrowser(new TreeBuilder(node), SCAN_DELAY, BATCH_SIZE, true);
 	}
 	
+	protected boolean isConnected() {
+		return connection != null && poller != null;
+	}
+	
 	@Override
 	protected void stop() {
 		if (poller != null) {

@@ -13,7 +13,6 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
-
 import org.dsa.iot.dslink.node.Node;
 import org.dsa.iot.dslink.node.Permission;
 import org.dsa.iot.dslink.node.actions.Action;
@@ -31,6 +30,8 @@ import org.openscada.opc.dcom.common.KeyedResult;
 import org.openscada.opc.dcom.common.KeyedResultSet;
 import org.openscada.opc.dcom.common.ResultSet;
 import org.openscada.opc.dcom.da.IOPCDataCallback;
+import org.openscada.opc.dcom.da.OPCSERVERSTATE;
+import org.openscada.opc.dcom.da.OPCSERVERSTATUS;
 import org.openscada.opc.dcom.da.ValueData;
 import org.openscada.opc.dcom.list.ClassDetails;
 import org.openscada.opc.lib.common.AlreadyConnectedException;
@@ -197,6 +198,21 @@ public class ComServer extends OpcServer {
 					addItemSub(entry.getValue());
 				}
 			}
+	}
+	
+	protected boolean isConnected() {
+		if (server == null) {
+			return false;
+		}
+		OPCSERVERSTATUS status = server.getServerState();
+		if (status == null) {
+			return false;
+		}
+		OPCSERVERSTATE state = status.getServerState();
+		if (state == null) {
+			return false;
+		}
+		return state.equals(OPCSERVERSTATE.OPC_STATUS_RUNNING);
 	}
 
 	@Override

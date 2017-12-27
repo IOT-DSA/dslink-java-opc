@@ -2,6 +2,8 @@ package opc;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
 import org.dsa.iot.dslink.node.Node;
 import org.dsa.iot.dslink.node.Permission;
@@ -13,18 +15,24 @@ import org.dsa.iot.dslink.node.value.ValuePair;
 import org.dsa.iot.dslink.node.value.ValueType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.dsa.iot.dslink.util.Objects;
 import org.dsa.iot.dslink.util.handler.Handler;
 
 public abstract class OpcServer {
 	protected static final Logger LOGGER = LoggerFactory.getLogger(OpcServer.class);
 	
 	protected static final boolean LAZY_LOAD = false;
+	private static final long PING_DELAY_SECONDS = 5;
 	
 	protected final OpcConn conn;
 	protected final Node node;
 	protected boolean stopped;
 	protected final Node statnode;
 	protected final Map<String, Node> itemNodes = new ConcurrentHashMap<String, Node>();
+	private ScheduledFuture<?> pingFuture = null;
+	private boolean initializing = true;
+	private int failCount = 0;
+	private int pingCyclesToSkip = 0;
 	
 	OpcServer(OpcConn c, Node n) {
 		this.conn = c;
@@ -39,6 +47,9 @@ public abstract class OpcServer {
 	}
 	
 	void init() {
+		synchronized(this) {
+			initializing = true;
+		}
 		statnode.setValue(new Value("Connecting..."));
 		
 		String host = conn.node.getAttribute("host").getString();
@@ -72,11 +83,13 @@ public abstract class OpcServer {
     		else anode.setAction(act);
     		
     		onConnected();
+    		failCount = 0;
 		} else {
         	act = new Action(Permission.READ, new RefreshHandler());
     		anode = node.getChild("connect", true);
     		if (anode == null) node.createChild("connect", true).setAction(act).build().setSerializable(false);
     		else anode.setAction(act);
+    		failCount += 1;
         }
 		
 		act = new Action(Permission.READ, new Handler<ActionResult>() {
@@ -87,13 +100,52 @@ public abstract class OpcServer {
 		anode = node.getChild("clear", true);
 		if (anode == null) node.createChild("clear", true).setAction(act).build().setSerializable(false);
 		else anode.setAction(act);
+		
+		if (pingFuture == null) {
+			pingFuture = Objects.getDaemonThreadPool().scheduleWithFixedDelay(new Runnable() {
+				@Override
+				public void run() {
+					ping();
+				}
+			}, PING_DELAY_SECONDS, PING_DELAY_SECONDS, TimeUnit.SECONDS);
+		}
+		synchronized(this) {
+			initializing = false;
+		}
 	}
 	
 	protected abstract void connect(String host, String domain, String user, String pass);
 	
 	protected abstract void onConnected();
 	
+	protected abstract boolean isConnected();
+	
 	protected abstract Action getEditAction(String host, String domain, String user, String pass);
+	
+	private void ping() {
+		synchronized(this) {
+			if (pingCyclesToSkip > 0) {
+				LOGGER.info("Skipping Ping because Ping Cycles to skip = " + pingCyclesToSkip);
+				pingCyclesToSkip--;
+			} else if (!initializing) {
+				if (!isConnected()) {
+					LOGGER.info("Ping result bad, fail count =" + failCount);
+					pingCyclesToSkip = Math.min(failCount, 60);
+					Objects.getDaemonThreadPool().schedule(new Runnable() {
+						@Override
+						public void run() {
+							stop();
+							init();
+						}
+					}, 0, TimeUnit.SECONDS);
+				} else {
+					LOGGER.info("Ping result good");
+				}
+			} else {
+				LOGGER.info("Skipping Ping because initializing");
+			}
+		}
+	}
 	
 	protected void clear() {
 		itemNodes.clear();
@@ -169,6 +221,7 @@ public abstract class OpcServer {
 		stop();
 		node.clearChildren();
 		node.getParent().removeChild(node, false);
+		pingFuture.cancel(true);
 	}
 	
 	protected void stop() {
