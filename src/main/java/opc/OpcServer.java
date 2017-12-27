@@ -31,6 +31,7 @@ public abstract class OpcServer {
 	protected final Map<String, Node> itemNodes = new ConcurrentHashMap<String, Node>();
 	private ScheduledFuture<?> pingFuture = null;
 	private boolean initializing = true;
+	private boolean dontPing = false;
 	private int failCount = 0;
 	private int pingCyclesToSkip = 0;
 	
@@ -49,6 +50,7 @@ public abstract class OpcServer {
 	void init() {
 		synchronized(this) {
 			initializing = true;
+			dontPing = false;
 		}
 		statnode.setValue(new Value("Connecting..."));
 		
@@ -75,6 +77,9 @@ public abstract class OpcServer {
     		
     		act = new Action(Permission.READ, new Handler<ActionResult>(){
     			public void handle(ActionResult event) {
+    				synchronized(this) {
+    					dontPing = true;
+    				}
     				stop();
     			}
     		});
@@ -83,13 +88,18 @@ public abstract class OpcServer {
     		else anode.setAction(act);
     		
     		onConnected();
-    		failCount = 0;
+    		synchronized(this) {
+    			failCount = 0;
+    		}
+    		
 		} else {
         	act = new Action(Permission.READ, new RefreshHandler());
     		anode = node.getChild("connect", true);
     		if (anode == null) node.createChild("connect", true).setAction(act).build().setSerializable(false);
     		else anode.setAction(act);
-    		failCount += 1;
+    		synchronized(this) {
+    			failCount += 1;
+    		}
         }
 		
 		act = new Action(Permission.READ, new Handler<ActionResult>() {
@@ -127,7 +137,7 @@ public abstract class OpcServer {
 			if (pingCyclesToSkip > 0) {
 				LOGGER.info("Skipping Ping because Ping Cycles to skip = " + pingCyclesToSkip);
 				pingCyclesToSkip--;
-			} else if (!initializing) {
+			} else if (!initializing && !dontPing) {
 				if (!isConnected()) {
 					LOGGER.info("Ping result bad, fail count =" + failCount);
 					pingCyclesToSkip = Math.min(failCount, 60);
