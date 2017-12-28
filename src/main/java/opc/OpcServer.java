@@ -90,6 +90,7 @@ public abstract class OpcServer {
     		onConnected();
     		synchronized(this) {
     			failCount = 0;
+    			pingCyclesToSkip = 0;
     		}
     		
 		} else {
@@ -135,11 +136,12 @@ public abstract class OpcServer {
 	private void ping() {
 		synchronized(this) {
 			if (pingCyclesToSkip > 0) {
-				LOGGER.info("Skipping Ping because Ping Cycles to skip = " + pingCyclesToSkip);
+//				LOGGER.info("Skipping Ping because Ping Cycles to skip = " + pingCyclesToSkip);
 				pingCyclesToSkip--;
 			} else if (!initializing && !dontPing) {
 				if (!isConnected()) {
-					LOGGER.info("Ping result bad, fail count =" + failCount);
+//					LOGGER.info("Ping result bad, fail count =" + failCount);
+					LOGGER.debug("Not connected to server, scheduling reconnect");
 					pingCyclesToSkip = Math.min(failCount, 60);
 					Objects.getDaemonThreadPool().schedule(new Runnable() {
 						@Override
@@ -149,10 +151,10 @@ public abstract class OpcServer {
 						}
 					}, 0, TimeUnit.SECONDS);
 				} else {
-					LOGGER.info("Ping result good");
+//					LOGGER.info("Ping result good");
 				}
 			} else {
-				LOGGER.info("Skipping Ping because initializing");
+//				LOGGER.info("Skipping Ping because initializing or stopped");
 			}
 		}
 	}

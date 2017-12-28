@@ -201,18 +201,22 @@ public class ComServer extends OpcServer {
 	}
 	
 	protected boolean isConnected() {
-		if (server == null) {
+		try {
+			if (server == null) {
+				return false;
+			}
+			OPCSERVERSTATUS status = server.getServerState();
+			if (status == null) {
+				return false;
+			}
+			OPCSERVERSTATE state = status.getServerState();
+			if (state == null) {
+				return false;
+			}
+			return state.equals(OPCSERVERSTATE.OPC_STATUS_RUNNING);
+		} catch (Exception e) {
 			return false;
 		}
-		OPCSERVERSTATUS status = server.getServerState();
-		if (status == null) {
-			return false;
-		}
-		OPCSERVERSTATE state = status.getServerState();
-		if (state == null) {
-			return false;
-		}
-		return state.equals(OPCSERVERSTATE.OPC_STATUS_RUNNING);
 	}
 
 	@Override
