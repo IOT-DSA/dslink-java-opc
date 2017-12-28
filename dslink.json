@@ -1,6 +1,6 @@
 {
   "name": "dslink-java-opc",
-  "version": "0.2.17",
+  "version": "0.2.18",
   "description": "A dslink for opc",
   "license": "GNU GPL",
   "main": "bin/dslink-java-opc",
