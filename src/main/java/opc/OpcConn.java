@@ -62,9 +62,9 @@ public class OpcConn {
 		else anode.setAction(act);
 		
 		act = new Action(Permission.READ, new AddXmlHandler());
-		act.addParameter(new Parameter("name", ValueType.STRING, new Value("OpcXmlDaSrv")));
-		act.addParameter(new Parameter("url", ValueType.STRING, new Value("http://advosol.com/XMLDADemo/ts_sim/OpcDaGateway.asmx")));
-		act.addParameter(new Parameter("service name", ValueType.STRING, new Value("OpcXmlDaSrv")));
+		act.addParameter(new Parameter("name", ValueType.STRING, new Value("TestService")));
+		act.addParameter(new Parameter("url", ValueType.STRING, new Value("http://opcxml.demo-this.com/XmlDaSampleServer/Service.asmx")));
+		act.addParameter(new Parameter("service name", ValueType.STRING, new Value("Service")));
 		anode = node.getChild("add xml-da server", true);
 		if (anode == null) node.createChild("add xml-da server", true).setAction(act).build().setSerializable(false);
 		else anode.setAction(act);
