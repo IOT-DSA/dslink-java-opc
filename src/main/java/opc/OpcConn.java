@@ -44,7 +44,7 @@ public class OpcConn {
 		String host = node.getAttribute("host").getString();
 		String domain = node.getAttribute("domain").getString();
 		String user = node.getAttribute("user").getString();
-		String pass = node.getAttribute("password").getString();
+		String pass = String.valueOf(node.getPassword());
 		
 		Action act = getEditAction(host, domain, user, pass);
 		Node anode = node.getChild("edit", true);
@@ -96,7 +96,7 @@ public class OpcConn {
 		act.addParameter(new Parameter("host", ValueType.STRING, new Value(host)));
 		act.addParameter(new Parameter("domain", ValueType.STRING, new Value(domain)));
 		act.addParameter(new Parameter("user", ValueType.STRING, new Value(user)));
-		act.addParameter(new Parameter("password", ValueType.STRING, new Value(pass)).setEditorType(EditorType.PASSWORD));
+		act.addParameter(new Parameter("password", ValueType.STRING).setEditorType(EditorType.PASSWORD));
 		return act;
 	}
 	
@@ -122,7 +122,7 @@ public class OpcConn {
 			node.setAttribute("host", new Value(host));
 			node.setAttribute("domain", new Value(domain));
 			node.setAttribute("user", new Value(user));
-			node.setAttribute("password", new Value(password));
+			node.setPassword(password.toCharArray());
 			
 			if (name != null && name.length()>0 && !name.equals(node.getName())) {
 				rename(name);
