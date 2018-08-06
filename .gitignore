@@ -15,5 +15,4 @@ build
 nodes.json
 nodes.json.bak
 build/
-Californium.properties
 bin
