@@ -1,0 +1,19 @@
+# Gradle
+.gradle
+build
+
+# Project files
+*.iml
+.idea
+.classpath
+.project
+.settings
+
+# Misc
+.DS_Store
+.key
+nodes.json
+nodes.json.bak
+build/
+Californium.properties
+bin
