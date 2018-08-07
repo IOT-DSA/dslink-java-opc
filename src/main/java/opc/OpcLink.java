@@ -57,6 +57,16 @@ public class OpcLink {
 			Value domain = child.getAttribute("domain");
 			Value user = child.getAttribute("user");
 			char[] pass = child.getPassword();
+			if (pass == null) {
+				Value v = child.removeAttribute("password");
+				if (v != null) {
+					String s = v.getString();
+					if (s != null) {
+						pass = s.toCharArray();
+						child.setPassword(pass);
+					}
+				}
+			}
 			if (host!=null && domain!=null && user!=null && pass!=null) {
 				OpcConn conn = new OpcConn(getMe(), child);
 				conn.restoreLastSession();
