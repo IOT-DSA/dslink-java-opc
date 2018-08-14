@@ -57,7 +57,7 @@ public abstract class OpcServer {
 		String host = conn.node.getAttribute("host").getString();
 		String domain = conn.node.getAttribute("domain").getString();
 		String user = conn.node.getAttribute("user").getString();
-		String pass = conn.node.getAttribute("password").getString();
+		String pass = String.valueOf(conn.node.getPassword());
 				
 		Action act = getEditAction(host, domain, user, pass);
 		Node anode = node.getChild("edit", true);
