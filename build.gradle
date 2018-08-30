@@ -1,55 +1,46 @@
 apply plugin: 'application'
 apply plugin: 'findbugs'
-apply plugin: 'java'
+apply plugin: 'java-library'
 
 mainClassName = 'opc.Main'
 sourceCompatibility = 1.7
 targetCompatibility = 1.7
-version = '0.2.21-SNAPSHOT'
+version = '0.3.0-SNAPSHOT'
 
 repositories {
-	flatDir { dirs 'lib' }
     mavenCentral()
     maven {
-    	url '.m2/repository'
-    }
-    maven {
         url 'https://oss.sonatype.org/content/repositories/snapshots/'
+    }
+    flatDir {
+        dirs 'lib'
     }
 }
 
 
 dependencies {
+    api 'org.iot-dsa:dslink:0.20.1'
+    implementation 'org.apache.commons:commons-lang3:3.8'
+    implementation 'org.eclipse.neoscada.utils:org.eclipse.scada.utils:0.3.0'
+    implementation 'org.openscada.jinterop:org.openscada.jinterop.core:2.1.8'
+    implementation 'org.openscada.jinterop:org.openscada.jinterop.deps:1.5.0'
+    implementation 'org.openscada.utgard:org.openscada.opc.lib:1.5.0'
+    implementation 'org.openscada.utgard:org.openscada.opc.dcom:1.5.0'
 
-    compile 'org.iot-dsa:dslink:0.17.4-SNAPSHOT'
-    compile 'commons-logging:commons-logging:1.1.1'
-    compile 'org.apache.commons:commons-lang3:3.4'
-    compile ':org.openscada.external:1+'
-    compile ':org.openscada.external.jcifs:1+'
-    compile ':org.openscada.external.sdk:1+'
-    compile ':org.openscada.jinterop:1+'
-    compile ':org.openscada.jinterop.core:2+'
-    compile ':org.openscada.jinterop.deps:1+'
-    compile ':org.openscada.jinterop.sdk:1+'
-    compile ':org.openscada.opc.dcom:1+'
-    compile ':org.openscada.opc.lib:1+'
-    compile ':org.openscada.opc.xmlda:1+'
-    compile ':org.openscada.utgard:1+'
-    compile ':org.openscada.utgard.sdk:1+'
-    compile 'org.eclipse.scada.utils:org.eclipse.scada.utils:0.3.0-SNAPSHOT'
+    //implementation 'org.openscada.utgard:org.openscada.opc.xmlda:1.5.0'
+    implementation ':org.openscada.opc.xmlda:1+'
 }
-
 
 run {
     args System.getProperty("exec.args", "").split()
     workingDir project.buildDir
 }
 
+wrapper {
+    gradleVersion = '4.10'
+}
 
 tasks.withType(FindBugs) {
-	//classes = classes.filter {
-    //    !it.path.contains(new File('com/serotonin').path)
-    //}
     reports {
         xml.enabled = false
         html.enabled = true
