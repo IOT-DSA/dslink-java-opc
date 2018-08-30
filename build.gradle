@@ -17,7 +17,6 @@ repositories {
     }
 }
 
-
 dependencies {
     api 'org.iot-dsa:dslink:0.20.1'
     implementation 'org.apache.commons:commons-lang3:3.8'
